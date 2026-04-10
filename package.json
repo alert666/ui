@@ -15,6 +15,7 @@
     "ahooks": "^3.8.4",
     "antd": "^5.24.6",
     "axios": "^1.8.4",
+    "big.js": "^7.0.1",
     "bignumber.js": "^9.3.1",
     "days": "^1.1.1",
     "react": "^19.0.0",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
+    "@types/big.js": "^6.2.2",
     "@types/node": "^22.14.0",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
