@@ -9,7 +9,7 @@ interface DynamicTableProps<T extends IdEntity> extends TableProps<T> {
 }
 
 export default function DynamicTable<T extends IdEntity>(
-  props: DynamicTableProps<T>
+  props: DynamicTableProps<T>,
 ) {
   const { extraHeight, ...tableProps } = props;
   const [scrollY, setScrollY] = useState<string>();

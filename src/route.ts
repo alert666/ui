@@ -10,7 +10,7 @@ import InfoPage from "./pages/user/Info";
 import { Role } from "./types/user/user";
 import Test from "./test/Test";
 import OAuthPage from "./pages/login/OAuth";
-import AlertHistoryPage from "./pages/alert/history";
+import AlertHistoryPage from "./pages/alert/History";
 export type MenuItem = Required<MenuProps>["items"][number];
 
 const router = createBrowserRouter([
