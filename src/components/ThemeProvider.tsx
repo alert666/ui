@@ -1,6 +1,8 @@
 // components/ThemeProvider.tsx
 import { App, ConfigProvider, theme as antdTheme } from "antd";
 import { createContext, useEffect, useMemo, useState } from "react";
+import zhCN from "antd/es/locale/zh_CN";
+import "dayjs/locale/zh-cn";
 
 export const GlobalContext = createContext<{
   theme: "light" | "dark";
@@ -31,12 +33,13 @@ export default function ThemeProvider({
 
   const contextValue = useMemo(
     () => ({ theme: mode, setTheme: setMode }),
-    [mode]
+    [mode],
   );
 
   return (
     <GlobalContext.Provider value={contextValue}>
       <ConfigProvider
+        locale={zhCN}
         theme={{
           token: {
             fontFamily:
@@ -48,14 +51,18 @@ export default function ThemeProvider({
               : antdTheme.defaultAlgorithm,
           components: {
             Table: {
-              fontSize: 13,
+              fontSize: 14,
+              padding: 8,
               headerBorderRadius: 8,
-              cellPaddingInline: 4,
-              cellPaddingInlineMD: 4,
-              cellPaddingInlineSM: 4,
-              cellPaddingBlock: 4,
-              cellPaddingBlockMD: 4,
-              cellPaddingBlockSM: 4,
+              // 1. 默认尺寸 (size="large" 或不填) 的 padding
+              cellPaddingInline: 12, // 左右增加到 16px
+              cellPaddingBlock: 12, // 上下增加到 12px (适中行高)
+              // 2. 中等尺寸 (size="middle") 的 padding
+              cellPaddingInlineMD: 12, // 左右 12px
+              cellPaddingBlockMD: 8, // 上下 8px
+              // 3. 小尺寸 (size="small") 的 padding
+              cellPaddingInlineSM: 8, // 左右 8px
+              cellPaddingBlockSM: 6, // 上下 6px
             },
             Pagination: {
               fontSize: 13,

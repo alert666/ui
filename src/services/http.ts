@@ -3,12 +3,18 @@ import { ErrorItem } from "@/components/ErrList";
 import { useErrorStore } from "@/stores/useErrorStore";
 import { ApiResponse } from "@/types";
 import axios, { AxiosError } from "axios";
+import qs from "qs";
 
 const apiClient = axios.create({
   withCredentials: true,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
+  },
+  paramsSerializer: (params) => {
+    // arrayFormat: 'repeat' 作用：
+    // 将 { labels: ['a', 'b'] } 序列化为 labels=a&labels=b
+    return qs.stringify(params, { arrayFormat: "repeat" });
   },
 });
 
@@ -23,7 +29,7 @@ apiClient.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 apiClient.interceptors.response.use(
@@ -38,7 +44,7 @@ apiClient.interceptors.response.use(
       requestId: res.requestId || "",
     });
     return Promise.reject(
-      new Error(res.message || "network error, please try again later")
+      new Error(res.message || "network error, please try again later"),
     );
   },
   (error: AxiosError) => {
@@ -77,7 +83,7 @@ apiClient.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 // 封装 GET 请求
