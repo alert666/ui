@@ -17,8 +17,9 @@ import {
   ReloadOutlined,
   PlusOutlined,
   AudioMutedOutlined,
+  SyncOutlined,
 } from "@ant-design/icons";
-import { useRequest } from "ahooks";
+import { useMount, useRequest } from "ahooks";
 import dayjs from "dayjs";
 import { useSearchParams } from "react-router-dom";
 
@@ -37,12 +38,13 @@ import {
 import { CreateAlertSilence } from "@/services/alertSilence";
 import useApp from "antd/es/app/useApp";
 import { CreateAlertSilenceRequest } from "@/types/alert/silence";
+import { PageOptionEnum } from "@/types/enum";
 
 const AlertHistoryPage = () => {
   const { token } = theme.useToken();
   const [form] = Form.useForm<AlertHistoryFormValues>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeDim, setActiveDim] = useState("alertName");
+  const [activeDim, setActiveDim] = useState<string>("alertName");
 
   const {
     data: alertHistoryData,
@@ -51,23 +53,36 @@ const AlertHistoryPage = () => {
     refresh: alertRefresh,
   } = useRequest(GetAlertHistoryList, { manual: true });
 
-  // --- 逻辑 1: 解析 URL 构造请求参数 ---
+  // --- 逻辑 1: 解析 URL 构造请求参数并发起请求 ---
   useEffect(() => {
+    const page = searchParams.get("page");
+    const pageSize = searchParams.get("pageSize");
+    // 如果没有 page，说明是真正的“第一次渲染（URL 为空）”，此时拦截请求
+    if (!page || !pageSize) return;
+
+    const urlStartsAt = searchParams.get("startsAt");
+    const urlEndsAt = searchParams.get("endsAt");
+    form.setFieldsValue({
+      searchValue: undefined,
+    });
+
     const params: AlertHistoryListRequest = {
-      page: Number(searchParams.get("page")) || 1,
-      pageSize: Number(searchParams.get("pageSize")) || 10,
+      page: Number(searchParams.get("page")) || PageOptionEnum.DEFAULTPAGE,
+      pageSize:
+        Number(searchParams.get("pageSize")) || PageOptionEnum.DEFAULTPAGESIZE,
       status: searchParams.get("status") || undefined,
-      alertSendRecordId:
-        Number(searchParams.get("alertSendRecordId")) || undefined,
+      alertSendRecordId: searchParams.get("alertSendRecordId")
+        ? Number(searchParams.get("alertSendRecordId"))
+        : undefined,
       severity: searchParams.get("severity") || undefined,
       alertName: searchParams.get("alertName") || undefined,
       fingerprint: searchParams.get("fingerprint") || undefined,
       instance: searchParams.get("instance") || undefined,
-      startsAt: searchParams.get("startsAt") || undefined,
-      endsAt: searchParams.get("endsAt") || undefined,
+      // 保持传给后端
+      startsAt: urlStartsAt ? urlStartsAt : undefined,
+      endsAt: urlEndsAt ? urlEndsAt : undefined,
       labels: searchParams.getAll("labels"),
     };
-
     run(params);
   }, [searchParams, run, form]);
 
@@ -90,17 +105,17 @@ const AlertHistoryPage = () => {
       } else {
         newSearchParams.set(searchKey, searchValue);
       }
-      form.setFieldValue("searchValue", ""); // 清空
+      form.setFieldValue("searchValue", undefined);
     }
 
-    // 🌟 处理时间并清空表单
-    if (startsAt) {
-      newSearchParams.set("startsAt", startsAt.toISOString());
-      form.setFieldValue("startsAt", null); // 🌟 清空 UI
+    // 🌟 处理时间：设置 URL 并清空输入框
+    if (startsAt && dayjs.isDayjs(startsAt)) {
+      newSearchParams.set("startsAt", startsAt.unix().toString());
+      form.setFieldValue("startsAt", null); // UI 清空
     }
-    if (endsAt) {
-      newSearchParams.set("endsAt", endsAt.toISOString());
-      form.setFieldValue("endsAt", null); // 🌟 清空 UI
+    if (endsAt && dayjs.isDayjs(endsAt)) {
+      newSearchParams.set("endsAt", endsAt.unix().toString());
+      form.setFieldValue("endsAt", null); // UI 清空
     }
 
     setSearchParams(newSearchParams);
@@ -108,14 +123,28 @@ const AlertHistoryPage = () => {
 
   const handleReset = () => {
     form.resetFields();
-    setSearchParams({ page: "1", pageSize: "10", status: "firing" });
+    // 重置后回到默认状态
+    const status = searchParams.get("status");
+    if (status) {
+      setSearchParams({
+        page: PageOptionEnum.DEFAULTPAGE.toString(),
+        pageSize: PageOptionEnum.DEFAULTPAGESIZE.toString(),
+        status: status,
+      });
+    } else {
+      setSearchParams({
+        page: PageOptionEnum.DEFAULTPAGE.toString(),
+        pageSize: PageOptionEnum.DEFAULTPAGESIZE.toString(),
+        status: "firing",
+      });
+    }
   };
 
   // --- 逻辑 3: 渲染已选条件标签 ---
   const renderFilterTags = useMemo(() => {
     const nodes: React.ReactNode[] = [];
 
-    // 1. 内置字段
+    // 渲染常规维度
     SEARCH_DIMENSIONS.filter((d) => !d.isLabel).forEach((dim) => {
       const val = searchParams.get(dim.value);
       if (val) {
@@ -136,7 +165,7 @@ const AlertHistoryPage = () => {
       }
     });
 
-    // 2. Labels
+    // 渲染标签维度
     searchParams.getAll("labels").forEach((labelStr) => {
       nodes.push(
         <Tag
@@ -158,8 +187,9 @@ const AlertHistoryPage = () => {
       );
     });
 
-    // 3. 时间标签（支持显示时分秒）
-    if (searchParams.get("startsAt")) {
+    // 渲染时间标签
+    const st = searchParams.get("startsAt");
+    if (st) {
       nodes.push(
         <Tag
           key="st"
@@ -170,12 +200,13 @@ const AlertHistoryPage = () => {
             setSearchParams(p);
           }}
         >
-          开始于:{" "}
-          {dayjs(searchParams.get("startsAt")).format("YYYY-MM-DD HH:mm:ss")}
+          开始于: {dayjs.unix(Number(st)).format("YYYY-MM-DD HH:mm:ss")}
         </Tag>,
       );
     }
-    if (searchParams.get("endsAt")) {
+
+    const et = searchParams.get("endsAt");
+    if (et) {
       nodes.push(
         <Tag
           key="et"
@@ -186,8 +217,7 @@ const AlertHistoryPage = () => {
             setSearchParams(p);
           }}
         >
-          结束于:{" "}
-          {dayjs(searchParams.get("endsAt")).format("YYYY-MM-DD HH:mm:ss")}
+          结束于: {dayjs.unix(Number(et)).format("YYYY-MM-DD HH:mm:ss")}
         </Tag>,
       );
     }
@@ -195,6 +225,7 @@ const AlertHistoryPage = () => {
     return nodes;
   }, [searchParams, setSearchParams]);
 
+  // --- 其他方法 (handleSilence等) 保持不变 ---
   const { run: updateRun, loading: updateLoading } = useRequest(
     UpdateAlertHistory,
     {
@@ -204,8 +235,13 @@ const AlertHistoryPage = () => {
       },
     },
   );
+
   const { modal } = useApp();
-  const [silenceForm] = Form.useForm();
+  const [silenceForm] = Form.useForm<{
+    endsAt: dayjs.Dayjs;
+    comment: string;
+  }>();
+
   const { run: createSilenceRun, loading: createSilenceLoading } = useRequest(
     CreateAlertSilence,
     {
@@ -216,10 +252,9 @@ const AlertHistoryPage = () => {
       },
     },
   );
-  const handleSilence = (record: AlertHistoryItem) => {
-    // 默认结束时间设为当前时间 + 2小时
-    const defaultEndTime = dayjs().add(2, "h");
 
+  const handleSilence = (record: AlertHistoryItem) => {
+    const defaultEndTime = dayjs().add(2, "h");
     silenceForm.setFieldsValue({
       endsAt: defaultEndTime,
       comment: "",
@@ -249,17 +284,9 @@ const AlertHistoryPage = () => {
               format="YYYY-MM-DD HH:mm:ss"
               style={{ width: "100%" }}
               placeholder="请选择静默结束时间"
-              // 限制：不能选择今天以前的日期
               disabledDate={(current) =>
                 current && current < dayjs().startOf("day")
               }
-              // 可选：设置快捷选项
-              presets={[
-                { label: "1小时后", value: dayjs().add(1, "h") },
-                { label: "12小时后", value: dayjs().add(12, "h") },
-                { label: "明天此时", value: dayjs().add(1, "d") },
-                { label: "下周此时", value: dayjs().add(7, "d") },
-              ]}
             />
           </Form.Item>
 
@@ -268,23 +295,19 @@ const AlertHistoryPage = () => {
             label="静默原因"
             rules={[{ required: true, message: "请输入静默原因" }]}
           >
-            <Input.TextArea
-              placeholder="例如：数据库例行维护、已知网络波动等"
-              rows={3}
-            />
+            <Input.TextArea placeholder="请输入原因" rows={3} />
           </Form.Item>
         </Form>
       ),
       onOk: async () => {
         const values = await silenceForm.validateFields();
-
         const payload: CreateAlertSilenceRequest = {
           cluster: record.cluster,
-          type: 1, // 指纹静默
+          type: 1,
           fingerprint: record.fingerprint,
           status: 1,
-          startsAt: dayjs().toISOString(), // 默认从现在开始
-          endsAt: values.endsAt.toISOString(), // 直接使用选择器的时间
+          startsAt: dayjs().unix().toString(),
+          endsAt: values.endsAt.unix().toString(),
           comment: values.comment,
           createdBy: "console",
         };
@@ -293,10 +316,26 @@ const AlertHistoryPage = () => {
     });
   };
 
+  useMount(() => {
+    const page = searchParams.get("page");
+    const pageSize = searchParams.get("pageSize");
+    const status = searchParams.get("status");
+    if (!page || !pageSize || !status) {
+      const newParams = new URLSearchParams(searchParams);
+      if (!page) newParams.set("page", PageOptionEnum.DEFAULTPAGE.toString());
+      if (!pageSize)
+        newParams.set("pageSize", PageOptionEnum.DEFAULTPAGESIZE.toString());
+      if (!status) newParams.set("status", "firing");
+      setSearchParams(newParams, {
+        replace: true,
+      });
+    }
+  });
+
   return (
-    <div className="px-4">
+    <div className="px-2">
       <div
-        className="mb-4 p-4"
+        className="m-2 p-4"
         style={{
           backgroundColor: token.colorBgContainer,
           borderRadius: token.borderRadiusLG,
@@ -310,7 +349,6 @@ const AlertHistoryPage = () => {
                 <Form.Item name="searchKey" noStyle initialValue="alertName">
                   <Select
                     style={{ width: 110 }}
-                    listHeight={300}
                     onChange={(val) => {
                       setActiveDim(val);
                       form.setFieldValue("searchValue", undefined);
@@ -338,7 +376,7 @@ const AlertHistoryPage = () => {
                   ) : (
                     <Input
                       style={{ width: 200 }}
-                      placeholder="输入并回车添加"
+                      placeholder="输入并回车"
                       allowClear
                       onPressEnter={() => form.submit()}
                     />
@@ -347,7 +385,6 @@ const AlertHistoryPage = () => {
               </Space.Compact>
             </Col>
 
-            {/* 🌟 这里的 DatePicker 增加了 showTime */}
             <Col>
               <Form.Item name="startsAt" noStyle>
                 <DatePicker
@@ -378,6 +415,13 @@ const AlertHistoryPage = () => {
                   onClick={() => form.submit()}
                 >
                   添加筛选
+                </Button>
+                <Button
+                  icon={<SyncOutlined />}
+                  onClick={() => alertRefresh()}
+                  loading={loading}
+                >
+                  刷新
                 </Button>
                 <Button icon={<ReloadOutlined />} onClick={handleReset}>
                   重置
@@ -410,8 +454,14 @@ const AlertHistoryPage = () => {
         columns={GetAlertHistorycolumns({ token, updateRun, handleSilence })}
         dataSource={alertHistoryData?.list || []}
         pagination={{
-          current: Number(searchParams.get("page")) || 1,
-          pageSize: Number(searchParams.get("pageSize")) || 10,
+          showQuickJumper: true,
+          showSizeChanger: true,
+          pageSizeOptions: ["10", "20", "50", "100"],
+          current:
+            Number(searchParams.get("page")) || PageOptionEnum.DEFAULTPAGE,
+          pageSize:
+            Number(searchParams.get("pageSize")) ||
+            PageOptionEnum.DEFAULTPAGESIZE,
           total: alertHistoryData?.total || 0,
           onChange: (p, s) => {
             const params = new URLSearchParams(searchParams);
@@ -419,6 +469,8 @@ const AlertHistoryPage = () => {
             params.set("pageSize", s.toString());
             setSearchParams(params);
           },
+          showTotal: (total, range) =>
+            `${range[0]}-${range[1]} 条，共 ${total} 条数据`,
         }}
       />
     </div>

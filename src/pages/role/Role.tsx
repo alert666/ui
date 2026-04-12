@@ -114,7 +114,7 @@ const RolePage = () => {
 
   return (
     <div className="px-4">
-      <div className="flex justify-between pb-3">
+      <div className="flex justify-between p-2">
         <div className="flex gap-4">
           <Search
             placeholder={`按名称前缀搜索`}

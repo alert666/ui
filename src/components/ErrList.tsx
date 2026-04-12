@@ -56,10 +56,9 @@ const ErrorModal: React.FC<ErrorModalProps> = ({ errors, onClose }) => {
       title={`发生了 ${errors.length} 个错误`}
       open={errors.length > 0}
       onCancel={onClose}
-      destroyOnClose
       closable={false}
       width="50%"
-      maskClosable={false}
+      mask={false}
       styles={{
         body: {
           maxHeight: "60vh",

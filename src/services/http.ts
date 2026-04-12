@@ -25,6 +25,13 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
+    const tenantId =
+      new URLSearchParams(window.location.search).get("tenant") ||
+      localStorage.getItem("last_tenant_id");
+
+    if (tenantId) {
+      config.headers["X-Tenant-Id"] = tenantId;
+    }
     return config;
   },
   (error) => {
