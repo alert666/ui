@@ -1,8 +1,10 @@
 // components/ThemeProvider.tsx
 import { App, ConfigProvider, theme as antdTheme } from "antd";
 import { createContext, useEffect, useMemo, useState } from "react";
-import zhCN from "antd/es/locale/zh_CN";
+import locale from "antd/locale/zh_CN";
+import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
+dayjs.locale("zh-cn");
 
 export const GlobalContext = createContext<{
   theme: "light" | "dark";
@@ -39,7 +41,7 @@ export default function ThemeProvider({
   return (
     <GlobalContext.Provider value={contextValue}>
       <ConfigProvider
-        locale={zhCN}
+        locale={locale}
         theme={{
           token: {
             fontFamily:

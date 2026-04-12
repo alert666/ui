@@ -155,7 +155,7 @@ export default function AppHeader({
 
   const borderColor = isDark ? "#303030" : "#f0f0f0";
   const fontColor = isDark ? "#fff" : "#222";
-
+  const SIDER_WIDTH = 240;
   return (
     <div
       className="flex items-center justify-between px-4 h-16 transition-all duration-300"
@@ -167,20 +167,32 @@ export default function AppHeader({
     >
       {/* 左侧区域：Logo + 租户选择 */}
       <div className="flex items-center">
-        <img src={Logo} width={110} alt="Logo" className="mr-4" />
+        <div
+          style={{
+            width: SIDER_WIDTH - 16,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <img src={Logo} style={{ width: 130 }} alt="Logo" />
+        </div>
 
         {/* 垂直分割线 */}
         <div className="h-6 w-[1px] bg-gray-300 dark:bg-gray-700 mx-2" />
-
+        <div className="flex pl-4 items-center gap-1 ml-2 text-gray-400 dark:text-gray-500">
+          <ApartmentOutlined style={{ fontSize: 14 }} />
+          <span style={{ fontSize: 14, userSelect: "none" }}>选择租户</span>
+        </div>
         <Select
           variant="borderless"
+          showSearch
           loading={tenantLoading}
           placeholder="选择租户"
           value={currentTenant || undefined}
           onChange={onTenantChange}
           className="min-w-[150px] font-medium"
-          suffixIcon={<ApartmentOutlined />}
-          options={tenants} // 直接使用后端返回的 [{label, value}]
+          options={tenants}
           style={{ color: fontColor }}
           popupStyle={{ borderRadius: 8, width: 200 }}
         />

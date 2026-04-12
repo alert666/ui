@@ -123,7 +123,7 @@ const UserPage = () => {
         message.success("更新成功");
         refreshUserList();
       },
-    }
+    },
   );
 
   const handlePageChange = (page: number, pageSize: number) => {
@@ -166,7 +166,7 @@ const UserPage = () => {
 
   return (
     <div className="px-4">
-      <div className="flex justify-between pb-3">
+      <div className="flex p-2 justify-between">
         <div className="flex gap-4">
           <Select
             value={userStatus}

@@ -85,10 +85,19 @@ const LayoutPage = () => {
 
     const pathName = perfix + [...item.keyPath].reverse().join("/");
 
+    // 2. 🌟 重点：创建一个新的参数对象，只保留必须跨页面流转的参数
+    const newParams = new URLSearchParams();
+
+    // 只保留租户 ID
+    const tenant = searchParams.get("tenant");
+    if (tenant) {
+      newParams.set("tenant", tenant);
+    }
+
     // 关键：始终带上当前的 searchParams
     navigate({
       pathname: pathName,
-      search: searchParams.toString() ? `?${searchParams.toString()}` : "",
+      search: newParams.toString() ? `?${newParams.toString()}` : "",
     });
   };
 
@@ -116,7 +125,6 @@ const LayoutPage = () => {
         userData={userData}
         userLoad={userLoad}
         background={colorBgContainer}
-        // 这里使用 urlTenant，useEffect 会保证它最终有值
         currentTenant={urlTenant}
         tenants={tenantData || []}
         tenantLoading={tenantLoading}
@@ -165,7 +173,7 @@ const LayoutPage = () => {
             <Outlet />
           ) : (
             <div className="p-10">
-              <Spin tip="初始化环境..." />
+              <Spin fullscreen description="获取租户信息..." />
             </div>
           )}
         </Content>

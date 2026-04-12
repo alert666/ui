@@ -11,8 +11,8 @@ function Root() {
     );
   }
 
-  if (location.pathname === "/") {
-    return <Navigate to="/workspace" replace />;
+  if (location.pathname === "/" || location.pathname === "/workspace") {
+    return <Navigate to="/workspace/alert/history" replace />;
   }
 
   return <Outlet />;
