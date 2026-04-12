@@ -36,6 +36,12 @@ export function GetAlertHistorycolumns(
           .toNumber(),
     },
     {
+      title: "租户",
+      dataIndex: "cluster",
+      width: 100,
+      sorter: (a, b) => a.cluster.localeCompare(b.cluster),
+    },
+    {
       title: "告警指纹",
       width: "10%",
       dataIndex: "fingerprint",

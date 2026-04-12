@@ -18,7 +18,7 @@ import {
   PlusOutlined,
   AudioMutedOutlined,
 } from "@ant-design/icons";
-import { useRequest } from "ahooks";
+import { useMount, useRequest, useUnmount } from "ahooks";
 import dayjs from "dayjs";
 import { useSearchParams } from "react-router-dom";
 
@@ -37,13 +37,14 @@ import {
 import { CreateAlertSilence } from "@/services/alertSilence";
 import useApp from "antd/es/app/useApp";
 import { CreateAlertSilenceRequest } from "@/types/alert/silence";
+import { useParams } from "@/hooks/useParams";
 
 const AlertHistoryPage = () => {
   const { token } = theme.useToken();
   const [form] = Form.useForm<AlertHistoryFormValues>();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeDim, setActiveDim] = useState("alertName");
-
+  const { setParams, clearParams } = useParams();
   const {
     data: alertHistoryData,
     loading,
@@ -102,7 +103,6 @@ const AlertHistoryPage = () => {
       newSearchParams.set("endsAt", endsAt.toISOString());
       form.setFieldValue("endsAt", null); // 🌟 清空 UI
     }
-
     setSearchParams(newSearchParams);
   };
 
@@ -277,7 +277,6 @@ const AlertHistoryPage = () => {
       ),
       onOk: async () => {
         const values = await silenceForm.validateFields();
-
         const payload: CreateAlertSilenceRequest = {
           cluster: record.cluster,
           type: 1, // 指纹静默
@@ -292,6 +291,13 @@ const AlertHistoryPage = () => {
       },
     });
   };
+
+  useMount(() => {
+    setParams({ page: "1", pageSize: "10", status: "firing" });
+  });
+  useUnmount(() => {
+    clearParams();
+  });
 
   return (
     <div className="px-4">

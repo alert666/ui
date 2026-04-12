@@ -25,11 +25,13 @@ const ModalComponent = ({
       {...rest}
       style={style}
       styles={{
-        body: { margin: "20px", ...styles?.body },
+        body: {
+          margin: "20px",
+          // ...styles?.body,
+        },
         ...styles,
       }}
-      destroyOnClose={true}
-      maskClosable={false}
+      mask={false}
       okText="确认"
       cancelText="取消"
       title={title}
