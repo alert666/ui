@@ -131,7 +131,7 @@ const LayoutPage = () => {
         onTenantChange={handleTenantChange}
       />
 
-      <Layout style={{ padding: "16px", background: "transparent" }}>
+      <Layout style={{ margin: "6px", background: "transparent" }}>
         <Sider
           width={240}
           style={{
@@ -160,7 +160,7 @@ const LayoutPage = () => {
 
         <Content
           style={{
-            marginLeft: "16px",
+            marginLeft: "6px",
             background: colorBgContainer,
             borderRadius: borderRadiusLG,
             overflow: "auto",
