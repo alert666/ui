@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
 import { GlobalContext } from "@/components/ThemeProvider";
 import {
   Avatar,
@@ -51,6 +51,12 @@ export default function AppHeader({
       window.location.href = "/login";
     },
   });
+
+  const processedOptions = useMemo(() => {
+    const allOption = { label: "所有租户", value: "all" };
+    // 将“所有租户”放在数组第一项，后面跟着原始的 tenants 列表
+    return [allOption, ...tenants];
+  }, [tenants]);
 
   // 用户个人信息下拉卡片
   const dropdownContent = () => {
@@ -181,8 +187,8 @@ export default function AppHeader({
         {/* 垂直分割线 */}
         <div className="h-6 w-[1px] bg-gray-300 dark:bg-gray-700 mx-2" />
         <div className="flex pl-4 items-center gap-1 ml-2 text-gray-400 dark:text-gray-500">
-          <ApartmentOutlined style={{ fontSize: 14 }} />
-          <span style={{ fontSize: 14, userSelect: "none" }}>选择租户</span>
+          <ApartmentOutlined style={{ fontSize: 16 }} />
+          <span style={{ fontSize: 14, userSelect: "none" }}>当前租户</span>
         </div>
         <Select
           variant="borderless"
@@ -192,7 +198,7 @@ export default function AppHeader({
           value={currentTenant || undefined}
           onChange={onTenantChange}
           className="min-w-[150px] font-medium"
-          options={tenants}
+          options={processedOptions}
           style={{ color: fontColor }}
           popupStyle={{ borderRadius: 8, width: 200 }}
         />

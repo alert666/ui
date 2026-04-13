@@ -64,7 +64,7 @@ export default function ThemeProvider({
               cellPaddingBlockMD: 8, // 上下 8px
               // 3. 小尺寸 (size="small") 的 padding
               cellPaddingInlineSM: 8, // 左右 8px
-              cellPaddingBlockSM: 6, // 上下 6px
+              cellPaddingBlockSM: 5, // 上下 6px
             },
             Pagination: {
               fontSize: 13,

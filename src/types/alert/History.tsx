@@ -52,6 +52,9 @@ export function GetAlertHistorycolumns(
       dataIndex: "alertname",
       sorter: (a, b) => a.alertname.localeCompare(b.alertname),
       width: 150,
+      ellipsis: {
+        showTitle: false,
+      },
       render: (alertname: string) => (
         <Tooltip placement="topLeft" title={alertname}>
           {alertname}
@@ -104,7 +107,6 @@ export function GetAlertHistorycolumns(
             {entries.map(([key, value]) => (
               <Tag
                 key={key}
-                bordered={false}
                 color="processing"
                 style={{
                   whiteSpace: "normal",
