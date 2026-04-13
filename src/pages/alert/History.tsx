@@ -14,12 +14,12 @@ import {
   message,
 } from "antd";
 import {
-  ReloadOutlined,
   PlusOutlined,
   AudioMutedOutlined,
   SyncOutlined,
+  FireOutlined,
 } from "@ant-design/icons";
-import { useMount, useRequest } from "ahooks";
+import { useRequest } from "ahooks";
 import dayjs from "dayjs";
 import { useSearchParams } from "react-router-dom";
 
@@ -57,20 +57,39 @@ const AlertHistoryPage = () => {
   useEffect(() => {
     const page = searchParams.get("page");
     const pageSize = searchParams.get("pageSize");
-    // 如果没有 page，说明是真正的“第一次渲染（URL 为空）”，此时拦截请求
-    if (!page || !pageSize) return;
+    const status = searchParams.get("status");
 
+    // 1. 【核心修复】检查必要参数是否完整
+    // 如果这三个核心参数有一个缺失，就说明 URL 处于“非就绪”状态
+    if (!page || !pageSize) {
+      const newParams = new URLSearchParams(searchParams);
+      if (!page) newParams.set("page", PageOptionEnum.DEFAULTPAGE.toString());
+      if (!pageSize)
+        newParams.set("pageSize", PageOptionEnum.DEFAULTPAGESIZE.toString());
+      if (!status) newParams.set("status", "firing");
+
+      // 更新 URL，replace: true 保证不会产生多余的浏览器历史记录
+      // 这一步执行后，useEffect 会因为 searchParams 改变而再次触发
+      setSearchParams(newParams, { replace: true });
+
+      // 🌟 关键：补全 URL 期间直接返回，拦截本次不完整的请求
+      return;
+    }
+
+    // 2. 如果代码执行到这里，说明 page, pageSize, status 都在 URL 里了
+    // 此时只发一次完整的请求
     const urlStartsAt = searchParams.get("startsAt");
     const urlEndsAt = searchParams.get("endsAt");
+
+    // 重置搜索框显示（如果需要）
     form.setFieldsValue({
       searchValue: undefined,
     });
 
     const params: AlertHistoryListRequest = {
-      page: Number(searchParams.get("page")) || PageOptionEnum.DEFAULTPAGE,
-      pageSize:
-        Number(searchParams.get("pageSize")) || PageOptionEnum.DEFAULTPAGESIZE,
-      status: searchParams.get("status") || undefined,
+      page: Number(page),
+      pageSize: Number(pageSize),
+      status: status || undefined,
       alertSendRecordId: searchParams.get("alertSendRecordId")
         ? Number(searchParams.get("alertSendRecordId"))
         : undefined,
@@ -78,11 +97,11 @@ const AlertHistoryPage = () => {
       alertName: searchParams.get("alertName") || undefined,
       fingerprint: searchParams.get("fingerprint") || undefined,
       instance: searchParams.get("instance") || undefined,
-      // 保持传给后端
-      startsAt: urlStartsAt ? urlStartsAt : undefined,
-      endsAt: urlEndsAt ? urlEndsAt : undefined,
+      startsAt: urlStartsAt || undefined,
+      endsAt: urlEndsAt || undefined,
       labels: searchParams.getAll("labels"),
     };
+
     run(params);
   }, [searchParams, run, form]);
 
@@ -125,17 +144,20 @@ const AlertHistoryPage = () => {
     form.resetFields();
     // 重置后回到默认状态
     const status = searchParams.get("status");
+    const tenant = searchParams.get("tenant") || "all";
     if (status) {
       setSearchParams({
         page: PageOptionEnum.DEFAULTPAGE.toString(),
         pageSize: PageOptionEnum.DEFAULTPAGESIZE.toString(),
         status: status,
+        tenant: tenant,
       });
     } else {
       setSearchParams({
         page: PageOptionEnum.DEFAULTPAGE.toString(),
         pageSize: PageOptionEnum.DEFAULTPAGESIZE.toString(),
         status: "firing",
+        tenant: tenant,
       });
     }
   };
@@ -316,21 +338,21 @@ const AlertHistoryPage = () => {
     });
   };
 
-  useMount(() => {
-    const page = searchParams.get("page");
-    const pageSize = searchParams.get("pageSize");
-    const status = searchParams.get("status");
-    if (!page || !pageSize || !status) {
-      const newParams = new URLSearchParams(searchParams);
-      if (!page) newParams.set("page", PageOptionEnum.DEFAULTPAGE.toString());
-      if (!pageSize)
-        newParams.set("pageSize", PageOptionEnum.DEFAULTPAGESIZE.toString());
-      if (!status) newParams.set("status", "firing");
-      setSearchParams(newParams, {
-        replace: true,
-      });
-    }
-  });
+  // useMount(() => {
+  //   const page = searchParams.get("page");
+  //   const pageSize = searchParams.get("pageSize");
+  //   const status = searchParams.get("status");
+  //   if (!page || !pageSize || !status) {
+  //     const newParams = new URLSearchParams(searchParams);
+  //     if (!page) newParams.set("page", PageOptionEnum.DEFAULTPAGE.toString());
+  //     if (!pageSize)
+  //       newParams.set("pageSize", PageOptionEnum.DEFAULTPAGESIZE.toString());
+  //     if (!status) newParams.set("status", "firing");
+  //     setSearchParams(newParams, {
+  //       replace: true,
+  //     });
+  //   }
+  // });
 
   return (
     <div className="px-2">
@@ -408,23 +430,37 @@ const AlertHistoryPage = () => {
             </Col>
 
             <Col>
-              <Space>
+              <Space size="middle">
                 <Button
                   type="primary"
                   icon={<PlusOutlined />}
                   onClick={() => form.submit()}
+                  // 稍微加深主色调的质感
+                  style={{ borderRadius: "6px", fontWeight: 500 }}
                 >
                   添加筛选
                 </Button>
+
+                <Button
+                  icon={<FireOutlined />}
+                  onClick={handleReset}
+                  // 使用 danger 颜色但开启 ghost 模式，使其看起来专业而不刺眼
+                  danger
+                  ghost
+                  style={{ borderRadius: "6px" }}
+                >
+                  Firing告警
+                </Button>
+
                 <Button
                   icon={<SyncOutlined />}
                   onClick={() => alertRefresh()}
                   loading={loading}
+                  type="text"
+                  className="bg-gray-50 hover:bg-gray-100 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                  style={{ borderRadius: "6px" }}
                 >
                   刷新
-                </Button>
-                <Button icon={<ReloadOutlined />} onClick={handleReset}>
-                  重置
                 </Button>
               </Space>
             </Col>
@@ -448,12 +484,13 @@ const AlertHistoryPage = () => {
       </div>
 
       <DynamicTable<AlertHistoryItem>
-        size="middle"
-        extraHeight={renderFilterTags.length > 0 ? 210 : 80}
+        size="small"
+        extraHeight={renderFilterTags.length > 0 ? 210 : 100}
         loading={loading || updateLoading || createSilenceLoading}
         columns={GetAlertHistorycolumns({ token, updateRun, handleSilence })}
         dataSource={alertHistoryData?.list || []}
         pagination={{
+          style: { marginRight: 16 },
           showQuickJumper: true,
           showSizeChanger: true,
           pageSizeOptions: ["10", "20", "50", "100"],
