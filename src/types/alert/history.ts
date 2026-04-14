@@ -93,3 +93,8 @@ export interface AlertHistoryItem {
 export interface AlertHistoryUpdateRequest {
   status: string;
 }
+
+export interface FiringCountByTenantResponse {
+  cluster: string;
+  count: number;
+}
