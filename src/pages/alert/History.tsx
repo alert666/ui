@@ -328,8 +328,8 @@ const AlertHistoryPage = () => {
           type: 1,
           fingerprint: record.fingerprint,
           status: 1,
-          startsAt: dayjs().unix().toString(),
-          endsAt: values.endsAt.unix().toString(),
+          startsAt: dayjs().unix(),
+          endsAt: values.endsAt.unix(),
           comment: values.comment,
           createdBy: "console",
         };

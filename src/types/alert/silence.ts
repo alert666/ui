@@ -3,8 +3,8 @@ export interface CreateAlertSilenceRequest {
   type: number;
   status: number;
   fingerprint: string;
-  startsAt: string;
-  endsAt: string;
+  startsAt: number;
+  endsAt: number;
   comment: string;
   createdBy: string;
 }
