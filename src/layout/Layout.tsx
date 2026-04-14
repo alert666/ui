@@ -1,8 +1,7 @@
-import { GetMemuItem } from "@/route";
 import { Layout, Menu, Spin, theme } from "antd";
 import { Content } from "antd/es/layout/layout";
 import Sider from "antd/es/layout/Sider";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Outlet,
   useLocation,
@@ -14,36 +13,78 @@ import { useRequest } from "ahooks";
 import { UserInfo } from "@/services/user";
 import useUserStore from "@/stores/userStore";
 import { GetTenantOptions } from "@/services/tenant";
+import { GetFiringCountByTenant } from "@/services/alertHistory";
+import { GetMemuItem } from "@/route";
+import { FiringCountByTenantResponse } from "@/types/alert/history";
 
-interface openKeys {
-  openKey: string[];
-  selectKeys: string[];
-}
-
-interface menuType {
+interface MenuClickParams {
   key: string;
   keyPath: string[];
 }
 
-const perfix = "/workspace/";
+const PREFIX = "/workspace/";
+// 统一路径常量，确保匹配一致
+const ALERT_HISTORY_PATH = "/workspace/alert/history";
 
 const LayoutPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { setUser } = useUserStore();
   const [searchParams, setSearchParams] = useSearchParams();
-
-  // 1. 优先实时反映 URL 状态
-  const urlTenant = searchParams.get("tenant");
-  const [openKey, setOpenkey] = useState<openKeys>({
-    openKey: [],
-    selectKeys: [],
-  });
-
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
+  const urlTenant = searchParams.get("tenant");
 
+  // 1. 定义请求 (manual 模式)
+  const firingCountReq = useRequest(GetFiringCountByTenant, {
+    manual: true,
+    pollingInterval: 30000,
+    pollingWhenHidden: false,
+  });
+
+  // 2. 🌟 统一调度器：处理 运行、停止、重置数据
+  useEffect(() => {
+    const path = location.pathname;
+
+    // 每当路径或租户改变时，立即将旧数据清空（置零）
+    firingCountReq.mutate(undefined);
+
+    // 逻辑判定：是否在告警历史页面
+    if (path.includes(ALERT_HISTORY_PATH)) {
+      // 开启请求
+      firingCountReq.run();
+    } else {
+      // 停止轮询
+      firingCountReq.cancel();
+    }
+
+    // 依赖项包含路径和租户ID，确保切换时触发重置和重新判定
+  }, [location.pathname, urlTenant]);
+
+  // 3. 🌟 数据计算：提取统计数据并映射到租户
+  const currentCountsMap = useMemo(() => {
+    const path = location.pathname;
+
+    // 安全地进行类型转换
+    const rawData = firingCountReq.data as unknown as
+      | FiringCountByTenantResponse[]
+      | undefined;
+    const res: Record<string, number> = {};
+
+    // 只有路径匹配且数据存在时才处理映射
+    if (path.includes(ALERT_HISTORY_PATH) && Array.isArray(rawData)) {
+      rawData.forEach((item) => {
+        if (item.cluster !== undefined) {
+          res[item.cluster] = item.count;
+        }
+      });
+    }
+
+    return res;
+  }, [location.pathname, firingCountReq.data]);
+
+  // 4. 基础数据获取：用户信息、租户列表
   const { data: userData, loading: userLoad } = useRequest(UserInfo, {
     onSuccess: (data) => setUser(data),
   });
@@ -51,73 +92,61 @@ const LayoutPage = () => {
   const { data: tenantData, loading: tenantLoading } =
     useRequest(GetTenantOptions);
 
-  // 租户切换处理
-  const handleTenantChange = (value: string) => {
-    setSearchParams((prev) => {
-      prev.set("tenant", value);
-      return prev;
-    });
-    localStorage.setItem("tenant", value);
-  };
+  // 5. 租户自动补全与切换逻辑
+  const handleTenantChange = useCallback(
+    (value: string) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("tenant", value);
+          return next;
+        },
+        { replace: true },
+      );
+      localStorage.setItem("tenant", value);
+    },
+    [setSearchParams],
+  );
 
-  // 核心逻辑：自动补全 URL 参数
   useEffect(() => {
-    // 仅当 URL 中没有租户信息时才进行同步
-    if (!urlTenant) {
+    // 自动补全租户：如果URL没租户，从本地拿或取列表第一个
+    if (urlTenant === null && tenantData && tenantData.length > 0) {
       const localTenant = localStorage.getItem("tenant");
-
-      if (localTenant) {
-        // 如果本地有缓存，同步到 URL
-        handleTenantChange(localTenant);
-      } else if (tenantData && tenantData.length > 0) {
-        // 如果本地没缓存，等接口返回后选第一个
-        handleTenantChange(tenantData[0].value);
-      }
+      const exists = tenantData.find((t) => t.value === localTenant);
+      const defaultVal = exists ? localTenant! : tenantData[0].value;
+      handleTenantChange(defaultVal);
     }
-  }, [urlTenant, tenantData]); // 仅监听 urlTenant 的变化和列表加载情况
+  }, [urlTenant, tenantData, handleTenantChange]);
 
-  // 侧边栏菜单点击
-  const menuClick = (item: menuType) => {
-    setOpenkey({
-      openKey: [item.keyPath[1]],
-      selectKeys: [item.keyPath[0]],
-    });
-
-    const pathName = perfix + [...item.keyPath].reverse().join("/");
-
-    // 2. 🌟 重点：创建一个新的参数对象，只保留必须跨页面流转的参数
-    const newParams = new URLSearchParams();
-
-    // 只保留租户 ID
-    const tenant = searchParams.get("tenant");
-    if (tenant) {
-      newParams.set("tenant", tenant);
-    }
-
-    // 关键：始终带上当前的 searchParams
-    navigate({
-      pathname: pathName,
-      search: newParams.toString() ? `?${newParams.toString()}` : "",
-    });
-  };
-
-  const menuChange = (openKeys: string[]) => {
-    setOpenkey((pre) => ({ ...pre, openKey: openKeys }));
-  };
-
-  const menuItems = useMemo(() => {
-    return GetMemuItem(userData?.roles || []);
-  }, [userData?.roles]);
-
-  useEffect(() => {
-    const path = location.pathname.split("/");
-    if (path.length >= 4) {
-      setOpenkey({
-        openKey: [path[2]],
-        selectKeys: [path[3]],
-      });
-    }
+  // 6. 侧边栏菜单状态同步 (由 URL 驱动)
+  const menuState = useMemo(() => {
+    const pathParts = location.pathname.split("/");
+    return {
+      selectedKeys: [pathParts[pathParts.length - 1]],
+      openKeys: [pathParts[2]],
+    };
   }, [location.pathname]);
+
+  const [manualOpenKeys, setManualOpenKeys] = useState<string[]>([]);
+
+  // 路径变化时同步展开状态
+  useEffect(() => {
+    if (menuState.openKeys[0]) {
+      setManualOpenKeys(menuState.openKeys);
+    }
+  }, [menuState.openKeys]);
+
+  const menuClick = ({ keyPath }: MenuClickParams) => {
+    const pathName = PREFIX + [...keyPath].reverse().join("/");
+    const tenant = searchParams.get("tenant");
+    // 跳转时保持租户参数，丢弃其他分页/搜索参数
+    navigate(`${pathName}${tenant ? `?tenant=${tenant}` : ""}`);
+  };
+
+  const menuItems = useMemo(
+    () => GetMemuItem(userData?.roles || []),
+    [userData?.roles],
+  );
 
   return (
     <Layout className="h-screen overflow-hidden">
@@ -129,32 +158,26 @@ const LayoutPage = () => {
         tenants={tenantData || []}
         tenantLoading={tenantLoading}
         onTenantChange={handleTenantChange}
+        firingCounts={currentCountsMap}
       />
 
       <Layout style={{ margin: "6px", background: "transparent" }}>
         <Sider
           width={240}
-          style={{
-            background: colorBgContainer,
-            height: "100%",
-            overflow: "auto",
-            borderRadius: borderRadiusLG,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-          }}
+          style={{ background: colorBgContainer, borderRadius: borderRadiusLG }}
         >
           <Menu
             style={{
-              background: colorBgContainer,
+              background: "transparent",
               height: "100%",
               borderRight: 0,
-              borderRadius: borderRadiusLG,
             }}
             items={menuItems}
             mode="inline"
             onClick={menuClick}
-            onOpenChange={menuChange}
-            openKeys={openKey.openKey}
-            selectedKeys={openKey.selectKeys}
+            onOpenChange={setManualOpenKeys}
+            openKeys={manualOpenKeys}
+            selectedKeys={menuState.selectedKeys}
           />
         </Sider>
 
@@ -164,16 +187,13 @@ const LayoutPage = () => {
             background: colorBgContainer,
             borderRadius: borderRadiusLG,
             overflow: "auto",
-            minHeight: 0,
-            borderLeft: "1px solid rgba(0, 0, 0, 0.06)",
           }}
         >
-          {/* 只有当租户信息确定后才渲染内容，防止业务组件发起没有 X-Tenant-Id 的请求 */}
-          {urlTenant ? (
+          {urlTenant !== null ? (
             <Outlet />
           ) : (
-            <div className="p-10">
-              <Spin fullscreen description="获取租户信息..." />
+            <div className="flex h-full items-center justify-center">
+              <Spin size="large" fullscreen description="正在载入工作空间..." />
             </div>
           )}
         </Content>

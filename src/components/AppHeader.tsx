@@ -5,22 +5,30 @@ import {
   Button,
   Dropdown,
   Space,
-  Spin,
   Divider,
   Typography,
   Select,
+  Tag,
 } from "antd";
 import {
   MailOutlined,
-  PoweroffOutlined,
   UserOutlined,
   ApartmentOutlined,
+  PoweroffOutlined,
 } from "@ant-design/icons";
+import { useLocation } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
 import { UserLogout } from "@/services/user";
 import { useRequest } from "ahooks";
 import { UserInfoResponse } from "@/types/user/user";
 import Logo from "@/assets/logo.png";
+import type { DefaultOptionType } from "antd/es/select";
+
+interface CustomTenantOption extends DefaultOptionType {
+  label: string;
+  value: string;
+  count: number;
+}
 
 interface AppHeaderProps {
   background: string;
@@ -28,9 +36,17 @@ interface AppHeaderProps {
   userLoad: boolean;
   currentTenant: string | null;
   tenants: { label: string; value: string }[];
+  firingCounts: Record<string, number>;
   tenantLoading: boolean;
   onTenantChange: (value: string) => void;
 }
+
+// 🌟 白名单：定义哪些路径下【需要显示】租户切换
+const SHOW_TENANT_PATHS = [
+  "/workspace/alert/history",
+  "/workspace/alert/silence",
+  "/workspace/alert/template",
+];
 
 export default function AppHeader({
   background,
@@ -38,11 +54,29 @@ export default function AppHeader({
   userLoad,
   currentTenant,
   tenants,
+  firingCounts,
   tenantLoading,
   onTenantChange,
 }: AppHeaderProps) {
   const { theme } = useContext(GlobalContext);
+  const location = useLocation();
   const isDark = theme === "dark";
+
+  // 1. 判断当前页面是否在【显示】白名单内
+  const isTenantVisible = useMemo(() => {
+    return SHOW_TENANT_PATHS.some((path) => location.pathname.startsWith(path));
+  }, [location.pathname]);
+
+  // 2. 构造选项列表：自动加入“所有租户”并合并统计数量
+  const options = useMemo<CustomTenantOption[]>(() => {
+    const tenantOptions: CustomTenantOption[] = tenants.map((t) => ({
+      label: t.label,
+      value: t.value,
+      count: firingCounts[t.value] || 0,
+    }));
+
+    return tenantOptions;
+  }, [tenants, firingCounts]);
 
   const { run: logoutRun } = useRequest(UserLogout, {
     manual: true,
@@ -52,13 +86,7 @@ export default function AppHeader({
     },
   });
 
-  const processedOptions = useMemo(() => {
-    const allOption = { label: "所有租户", value: "all" };
-    // 将“所有租户”放在数组第一项，后面跟着原始的 tenants 列表
-    return [allOption, ...tenants];
-  }, [tenants]);
-
-  // 用户个人信息下拉卡片
+  // 用户信息下拉卡片
   const dropdownContent = () => {
     const menuBg = isDark ? "#23232a" : "#fff";
     const menuFont = isDark ? "#fff" : "#222";
@@ -68,7 +96,7 @@ export default function AppHeader({
 
     return (
       <div
-        className="min-w-[300px] p-0 shadow-2xl rounded-lg overflow-hidden"
+        className="min-w-[300px] shadow-2xl rounded-lg overflow-hidden"
         style={{
           background: menuBg,
           color: menuFont,
@@ -84,15 +112,7 @@ export default function AppHeader({
           }}
         >
           <div className="flex items-start gap-4">
-            <Avatar
-              size={64}
-              src={userData?.avatar}
-              icon={!userData?.avatar && <UserOutlined />}
-              style={{
-                border: `2px solid ${menuBorder}`,
-                background: isDark ? "#18181c" : "#fff",
-              }}
-            />
+            <Avatar size={64} src={userData?.avatar} icon={<UserOutlined />} />
             <div className="flex-1">
               <Typography.Title
                 level={5}
@@ -103,32 +123,33 @@ export default function AppHeader({
               </Typography.Title>
               <div className="flex flex-wrap gap-2">
                 {userData?.roles?.map((role) => (
-                  <span
+                  <Tag
                     key={role.name}
+                    bordered={false}
                     style={{
                       background: roleBg,
                       color: roleColor,
-                      borderRadius: "999px",
-                      padding: "2px 8px",
+                      borderRadius: "10px",
                       fontSize: "11px",
-                      border: `1px solid ${menuBorder}`,
                     }}
                   >
                     {role.name}
-                  </span>
+                  </Tag>
                 ))}
               </div>
             </div>
           </div>
         </div>
 
+        {/* 🌟 重新加回用户信息详情区域 */}
         <div className="px-4 py-3 text-sm">
           <div className="flex items-center gap-3">
-            <UserOutlined style={{ color: isDark ? "#888" : "#1976d2" }} />
+            <UserOutlined style={{ color: isDark ? "#888" : "#1677ff" }} />
             <span className="truncate">{userData?.name || "未设置"}</span>
           </div>
+          {/* 这里是之前漏掉的邮箱 */}
           <div className="flex items-center gap-3 mt-2">
-            <MailOutlined style={{ color: isDark ? "#888" : "#1976d2" }} />
+            <MailOutlined style={{ color: isDark ? "#888" : "#1677ff" }} />
             <span className="truncate">{userData?.email || "未设置"}</span>
           </div>
         </div>
@@ -138,10 +159,8 @@ export default function AppHeader({
         <div className="p-2 flex gap-1">
           <Button
             type="text"
-            icon={<UserOutlined />}
-            onClick={() => window.open("/user/info", "_blank")}
             className="flex-1 text-sm"
-            style={{ color: menuFont }}
+            onClick={() => window.open("/user/info", "_blank")}
           >
             个人信息
           </Button>
@@ -149,8 +168,8 @@ export default function AppHeader({
             danger
             type="text"
             icon={<PoweroffOutlined />}
-            onClick={() => logoutRun()}
             className="flex-1 text-sm"
+            onClick={() => logoutRun()}
           >
             退出登录
           </Button>
@@ -160,69 +179,92 @@ export default function AppHeader({
   };
 
   const borderColor = isDark ? "#303030" : "#f0f0f0";
-  const fontColor = isDark ? "#fff" : "#222";
   const SIDER_WIDTH = 240;
+
   return (
     <div
-      className="flex items-center justify-between px-4 h-16 transition-all duration-300"
+      className="flex items-center justify-between px-4 h-16 transition-all"
       style={{
         backgroundColor: isDark ? background || "#18181c" : "#fff",
         borderBottom: `1px solid ${borderColor}`,
-        color: fontColor,
       }}
     >
-      {/* 左侧区域：Logo + 租户选择 */}
       <div className="flex items-center">
         <div
           style={{
             width: SIDER_WIDTH - 16,
             display: "flex",
-            alignItems: "center",
             justifyContent: "center",
           }}
         >
           <img src={Logo} style={{ width: 130 }} alt="Logo" />
         </div>
 
-        {/* 垂直分割线 */}
-        <div className="h-6 w-[1px] bg-gray-300 dark:bg-gray-700 mx-2" />
-        <div className="flex pl-4 items-center gap-1 ml-2 text-gray-400 dark:text-gray-500">
-          <ApartmentOutlined style={{ fontSize: 16 }} />
-          <span style={{ fontSize: 14, userSelect: "none" }}>当前租户</span>
-        </div>
-        <Select
-          variant="borderless"
-          showSearch
-          loading={tenantLoading}
-          placeholder="选择租户"
-          value={currentTenant || undefined}
-          onChange={onTenantChange}
-          className="min-w-[150px] font-medium"
-          options={processedOptions}
-          style={{ color: fontColor }}
-          popupStyle={{ borderRadius: 8, width: 200 }}
-        />
+        {isTenantVisible && (
+          <>
+            <div className="h-6 w-[1px] bg-gray-300 dark:bg-gray-700 mx-2" />
+            <div className="flex pl-4 items-center gap-1 ml-2 text-gray-400">
+              <ApartmentOutlined style={{ fontSize: 16 }} />
+              <span style={{ fontSize: 14, userSelect: "none" }}>当前租户</span>
+            </div>
+
+            <Select
+              variant="borderless"
+              showSearch
+              loading={tenantLoading}
+              value={currentTenant ?? ""} // 重要：null 匹配“所有租户”
+              onChange={onTenantChange}
+              options={options}
+              className="min-w-[160px] font-medium px-2"
+              popupStyle={{ borderRadius: 8, width: 240 }}
+              optionRender={(option) => {
+                const data = option.data as CustomTenantOption;
+                const isGlobal = data.value === "";
+                return (
+                  <div className="flex justify-between items-center w-full py-0.5">
+                    <span className="truncate" style={{ maxWidth: "140px" }}>
+                      {data.label}
+                    </span>
+                    {data.count > 0 && (
+                      <Tag
+                        bordered={false}
+                        color={isGlobal ? "processing" : "error"}
+                        style={{
+                          marginInlineEnd: 0,
+                          borderRadius: "10px",
+                          fontSize: "11px",
+                          paddingInline: "6px",
+                          lineHeight: "18px",
+                          height: "18px",
+                        }}
+                      >
+                        {data.count > 99 ? "99+" : data.count}
+                      </Tag>
+                    )}
+                  </div>
+                );
+              }}
+            />
+          </>
+        )}
       </div>
 
-      {/* 右侧区域：工具栏 */}
       <Space size={16}>
         <ThemeToggle />
-        {userLoad ? (
-          <Spin size="small" />
-        ) : (
+        {!userLoad && (
           <Dropdown
             popupRender={dropdownContent}
             trigger={["click"]}
             placement="bottomRight"
           >
-            <div className="flex items-center gap-2 cursor-pointer p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors">
-              <span className="text-sm font-medium hidden md:block">
+            <div className="flex items-center gap-2 cursor-pointer p-1 rounded-full px-3 hover:bg-black/5 dark:hover:bg-white/5">
+              <span className="text-sm font-medium">
                 {userData?.nickName || userData?.name}
               </span>
               <Avatar
                 src={userData?.avatar}
-                icon={!userData?.avatar && <UserOutlined />}
-                style={{ background: isDark ? "#333" : "#1976d2" }}
+                icon={<UserOutlined />}
+                style={{ background: isDark ? "#333" : "#1677ff" }}
               />
             </div>
           </Dropdown>
