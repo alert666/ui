@@ -12,12 +12,14 @@ import {
   Tag,
   Typography,
   message,
+  Tooltip,
 } from "antd";
 import {
   PlusOutlined,
   AudioMutedOutlined,
   SyncOutlined,
   FireOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 import { useRequest } from "ahooks";
 import dayjs from "dayjs";
@@ -144,7 +146,7 @@ const AlertHistoryPage = () => {
     form.resetFields();
     // 重置后回到默认状态
     const status = searchParams.get("status");
-    const tenant = searchParams.get("tenant") || "all";
+    const tenant = searchParams.get("tenant") || "";
     if (status) {
       setSearchParams({
         page: PageOptionEnum.DEFAULTPAGE.toString(),
@@ -338,39 +340,26 @@ const AlertHistoryPage = () => {
     });
   };
 
-  // useMount(() => {
-  //   const page = searchParams.get("page");
-  //   const pageSize = searchParams.get("pageSize");
-  //   const status = searchParams.get("status");
-  //   if (!page || !pageSize || !status) {
-  //     const newParams = new URLSearchParams(searchParams);
-  //     if (!page) newParams.set("page", PageOptionEnum.DEFAULTPAGE.toString());
-  //     if (!pageSize)
-  //       newParams.set("pageSize", PageOptionEnum.DEFAULTPAGESIZE.toString());
-  //     if (!status) newParams.set("status", "firing");
-  //     setSearchParams(newParams, {
-  //       replace: true,
-  //     });
-  //   }
-  // });
-
   return (
-    <div className="px-2">
+    <div className="">
       <div
-        className="m-2 p-4"
+        className="m-2 p-5"
         style={{
           backgroundColor: token.colorBgContainer,
           borderRadius: token.borderRadiusLG,
           border: `1px solid ${token.colorBorderSecondary}`,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
         }}
       >
-        <Form form={form} layout="inline" onFinish={onHandleSearch}>
-          <Row gutter={[12, 12]} align="middle" className="w-full">
-            <Col>
-              <Space.Compact>
+        <Form form={form} onFinish={onHandleSearch}>
+          <div className="flex flex-wrap items-center gap-4">
+            {/* 左侧：搜索组合 */}
+            <div className="flex items-center">
+              <Space.Compact style={{ boxShadow: "0 2px 0 rgba(0,0,0,0.015)" }}>
                 <Form.Item name="searchKey" noStyle initialValue="alertName">
                   <Select
-                    style={{ width: 110 }}
+                    style={{ width: 110, textAlign: "center" }}
+                    className="bg-gray-50"
                     onChange={(val) => {
                       setActiveDim(val);
                       form.setFieldValue("searchValue", undefined);
@@ -387,8 +376,8 @@ const AlertHistoryPage = () => {
                   {SEARCH_DIMENSIONS.find((d) => d.value === activeDim)
                     ?.type === "select" ? (
                     <Select
-                      style={{ width: 150 }}
-                      placeholder="请选择"
+                      style={{ width: 160 }}
+                      placeholder="请选择内容"
                       options={
                         SEARCH_DIMENSIONS.find((d) => d.value === activeDim)
                           ?.options
@@ -398,94 +387,107 @@ const AlertHistoryPage = () => {
                   ) : (
                     <Input
                       style={{ width: 200 }}
-                      placeholder="输入并回车"
+                      placeholder="搜索关键词..."
                       allowClear
+                      prefix={
+                        <SearchOutlined
+                          style={{ color: token.colorTextQuaternary }}
+                        />
+                      }
                       onPressEnter={() => form.submit()}
                     />
                   )}
                 </Form.Item>
               </Space.Compact>
-            </Col>
+            </div>
 
-            <Col>
+            {/* 中间：时间范围 */}
+            <div className="flex items-center gap-2">
               <Form.Item name="startsAt" noStyle>
                 <DatePicker
                   showTime
+                  style={{ width: 190 }}
                   format="YYYY-MM-DD HH:mm:ss"
                   placeholder="开始时间"
-                  onOk={() => form.submit()}
                 />
               </Form.Item>
-            </Col>
-
-            <Col>
+              <span style={{ color: token.colorTextQuaternary }}>至</span>
               <Form.Item name="endsAt" noStyle>
                 <DatePicker
                   showTime
+                  style={{ width: 190 }}
                   format="YYYY-MM-DD HH:mm:ss"
                   placeholder="结束时间"
-                  onOk={() => form.submit()}
                 />
               </Form.Item>
-            </Col>
+            </div>
 
-            <Col>
-              <Space size="middle">
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => form.submit()}
-                  // 稍微加深主色调的质感
-                  style={{ borderRadius: "6px", fontWeight: 500 }}
-                >
-                  添加筛选
-                </Button>
+            {/* 右侧：操作按钮组 */}
+            <div className="flex items-center gap-2 ml-auto">
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => form.submit()}
+                style={{ paddingInline: 20, fontWeight: 500 }}
+              >
+                查询
+              </Button>
 
-                <Button
-                  icon={<FireOutlined />}
-                  onClick={handleReset}
-                  // 使用 danger 颜色但开启 ghost 模式，使其看起来专业而不刺眼
-                  danger
-                  ghost
-                  style={{ borderRadius: "6px" }}
-                >
-                  Firing告警
-                </Button>
+              <Button
+                icon={<FireOutlined />}
+                onClick={handleReset}
+                style={{
+                  color: "#ff4d4f",
+                  borderColor: "#ff4d4f",
+                  backgroundColor: "#fff1f0",
+                }}
+              >
+                Firing告警
+              </Button>
 
+              <Tooltip title="刷新数据">
                 <Button
-                  icon={<SyncOutlined />}
+                  icon={<SyncOutlined spin={loading} />}
                   onClick={() => alertRefresh()}
-                  loading={loading}
                   type="text"
-                  className="bg-gray-50 hover:bg-gray-100 dark:bg-zinc-800 dark:hover:bg-zinc-700"
-                  style={{ borderRadius: "6px" }}
-                >
-                  刷新
-                </Button>
-              </Space>
-            </Col>
-          </Row>
+                  style={{
+                    backgroundColor: token.colorFillAlter,
+                    borderRadius: "50%",
+                    width: 32,
+                    height: 32,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                />
+              </Tooltip>
+            </div>
+          </div>
         </Form>
 
+        {/* 已选条件区域优化 */}
         {renderFilterTags.length > 0 && (
-          <div className="mt-3 flex items-start">
+          <div
+            className="mt-4 p-2 flex items-center border-t border-dashed"
+            style={{ borderColor: token.colorBorderSecondary }}
+          >
             <Typography.Text
               type="secondary"
-              className="mr-2 mt-1"
-              style={{ fontSize: 12 }}
+              className="mr-3"
+              style={{ fontSize: 12, display: "flex", alignItems: "center" }}
             >
-              已选条件:
+              <SearchOutlined style={{ marginRight: 4 }} /> 当前筛选:
             </Typography.Text>
             <Space size={[0, 8]} wrap>
               {renderFilterTags}
-            </Space>
+            </Space>{" "}
           </div>
         )}
       </div>
 
       <DynamicTable<AlertHistoryItem>
-        size="small"
-        extraHeight={renderFilterTags.length > 0 ? 210 : 100}
+        size="large"
+        extraHeight={renderFilterTags.length > 0 ? 145 : 70}
         loading={loading || updateLoading || createSilenceLoading}
         columns={GetAlertHistorycolumns({ token, updateRun, handleSilence })}
         dataSource={alertHistoryData?.list || []}
