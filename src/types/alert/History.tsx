@@ -17,12 +17,15 @@ interface AlertHistoryColumnsProps {
   token: GlobalToken;
   updateRun: (id: string, data: AlertHistoryUpdateRequest) => void;
   handleSilence: (record: AlertHistoryItem) => void;
+  handleView: (record: AlertHistoryItem) => void;
+  handleViewLoading: boolean;
 }
 
 export function GetAlertHistorycolumns(
   props: AlertHistoryColumnsProps,
 ): ColumnsType<AlertHistoryItem> {
-  const { token, updateRun, handleSilence } = props;
+  const { token, updateRun, handleSilence, handleView, handleViewLoading } =
+    props;
 
   return [
     {
@@ -36,7 +39,12 @@ export function GetAlertHistorycolumns(
       },
       render: (alertname: string) => (
         <Tooltip placement="topLeft" title={alertname}>
-          <Typography.Text strong>{alertname}</Typography.Text>
+          <Typography.Text
+            copyable={alertname ? { text: alertname } : false}
+            strong
+          >
+            {alertname}
+          </Typography.Text>
         </Tooltip>
       ),
     },
@@ -66,11 +74,16 @@ export function GetAlertHistorycolumns(
         if (record.endsAt) {
           return (
             <Tooltip
+              styles={{
+                root: {
+                  maxWidth: "none",
+                },
+              }}
               title={
-                <span>
+                <div style={{ whiteSpace: "nowrap" }}>
                   <ClockCircleOutlined style={{ marginRight: 4 }} />
                   恢复时间: {record.endsAt}
-                </span>
+                </div>
               }
             >
               <span
@@ -91,20 +104,25 @@ export function GetAlertHistorycolumns(
       },
     },
     {
-      title: "结束时间",
-      dataIndex: "endsAt",
+      title: "实例",
+      dataIndex: "instance",
       width: 180,
-      responsive: ["lg"], // 大屏幕才显示独立列，小屏通过开始时间悬浮查看
-      render: (endsAt: string) => {
-        return endsAt === null ? (
-          <Tag color="error">告警未恢复</Tag>
-        ) : (
-          <Typography.Text type="secondary">{endsAt}</Typography.Text>
+      // responsive: ["xxl"], // 如果你希望在普通分辨率下也显示，可以删掉这行
+      sorter: (a, b) => (a.instance || "").localeCompare(b.instance || ""),
+      render: (instance: string) => {
+        return (
+          <Typography.Text
+            // 增加复制功能，方便排查时快速拷贝 IP/主机名
+            copyable={instance ? { text: instance } : false}
+            ellipsis={true}
+          >
+            {instance || "-"}
+          </Typography.Text>
         );
       },
     },
     {
-      title: "状态 - 级别",
+      title: "状态 - 级别 - 静默",
       key: "status_severity",
       width: 150,
       render: (_, record) => {
@@ -160,6 +178,33 @@ export function GetAlertHistorycolumns(
             >
               {sev.label}
             </span>
+            {record.isSilenced ? (
+              <span
+                style={{
+                  padding: "2px 8px",
+                  borderRadius: "0 4px 4px 0",
+                  backgroundColor: `${sev.color}`,
+                  color: "#fff",
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                }}
+              >
+                已静默
+              </span>
+            ) : (
+              <span
+                style={{
+                  padding: "2px 8px",
+                  borderRadius: "0 4px 4px 0",
+                  backgroundColor: "green",
+                  color: "#fff",
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                }}
+              >
+                未静默
+              </span>
+            )}
           </div>
         );
       },
@@ -218,20 +263,100 @@ export function GetAlertHistorycolumns(
       },
     },
     {
+      title: "详情",
+      dataIndex: "annotations",
+      width: 200,
+      ellipsis: true, // 开启单元格自动截断
+      render: (annotations: { summary: string; description: string }) => {
+        const description = annotations?.description || "-";
+        // 气泡卡片展示的内容
+        const fullContent = (
+          <div
+            style={{
+              maxWidth: "400px",
+              maxHeight: "300px",
+              overflowY: "auto",
+              // 关键：保留换行符并支持自动换行
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-all",
+              fontSize: "13px",
+              lineHeight: "1.6",
+              padding: "4px",
+            }}
+          >
+            {description}
+          </div>
+        );
+
+        return (
+          <Popover
+            content={fullContent}
+            title={
+              <Typography.Text strong style={{ fontSize: "14px" }}>
+                告警详细信息
+              </Typography.Text>
+            }
+            placement="topLeft"
+            trigger="hover"
+            // 解决移动端和窄屏下 Popover 抖动或遮挡问题
+            mouseEnterDelay={0.2}
+          >
+            <div style={{ cursor: "pointer" }}>
+              <Typography.Text
+                type="secondary"
+                ellipsis={{
+                  // 这里关闭自带的 tooltip，因为我们用了更强大的 Popover
+                  tooltip: false,
+                }}
+                style={{
+                  maxWidth: "180px", // 配合宽度进行截断
+                  display: "block",
+                }}
+              >
+                {/* 优先显示 summary，如果没有则显示描述的第一行 */}
+                {annotations?.summary || description.split("\n")[0]}
+              </Typography.Text>
+            </div>
+          </Popover>
+        );
+      },
+    },
+    {
       title: "操作",
       key: "action",
       fixed: "right",
       width: 140,
       render: (_, record) => {
         if (record.status !== "firing") {
-          return <Typography.Text>已恢复</Typography.Text>;
+          return (
+            <Button
+              style={{ padding: 0 }}
+              type="link"
+              loading={handleViewLoading}
+              onClick={() => handleView(record)}
+            >
+              查看
+            </Button>
+          );
         }
-
         return (
           <Space size={8}>
-            <Typography.Link onClick={() => handleSilence(record)}>
+            <Button
+              style={{ padding: 0 }}
+              type="link"
+              loading={handleViewLoading}
+              onClick={() => handleView(record)}
+            >
+              查看
+            </Button>
+            <Button
+              color="danger"
+              variant="link"
+              style={{ padding: 0 }}
+              onClick={() => handleSilence(record)}
+            >
               静默
-            </Typography.Link>
+            </Button>
 
             <Popconfirm
               title="手动恢复告警"

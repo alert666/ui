@@ -11,6 +11,7 @@ import {
   Typography,
   message,
   Tooltip,
+  Drawer,
 } from "antd";
 import {
   PlusOutlined,
@@ -32,6 +33,7 @@ import {
   SEARCH_DIMENSIONS,
 } from "@/types/alert/history";
 import {
+  GetAlertHistory,
   GetAlertHistoryList,
   UpdateAlertHistory,
 } from "@/services/alertHistory";
@@ -39,6 +41,7 @@ import { CreateAlertSilence } from "@/services/alertSilence";
 import useApp from "antd/es/app/useApp";
 import { CreateAlertSilenceRequest } from "@/types/alert/silence";
 import { PageOptionEnum } from "@/types/enum";
+import { AlertDetailContent } from "@/components/alertHistory/AlertHistory";
 
 const AlertHistoryPage = () => {
   const { token } = theme.useToken();
@@ -338,6 +341,13 @@ const AlertHistoryPage = () => {
     });
   };
 
+  const [detailVisible, setDetailVisible] = useState(false);
+  const getAlertHistoryResult = useRequest(GetAlertHistory, { manual: true });
+
+  const handleView = (record: AlertHistoryItem) => {
+    getAlertHistoryResult.run({ id: Number(record.id) });
+    setDetailVisible(true);
+  };
   return (
     <div className="">
       <div
@@ -483,11 +493,33 @@ const AlertHistoryPage = () => {
         )}
       </div>
 
+      <Drawer
+        title={`告警详情 - ${getAlertHistoryResult.data?.alertname || ""}`}
+        placement="right"
+        onClose={() => setDetailVisible(false)}
+        open={detailVisible}
+        loading={getAlertHistoryResult.loading}
+        size={"50%"}
+        styles={{
+          body: {
+            padding: "4px",
+          },
+        }}
+      >
+        <AlertDetailContent data={getAlertHistoryResult.data} />
+      </Drawer>
+
       <DynamicTable<AlertHistoryItem>
         size="large"
         extraHeight={renderFilterTags.length > 0 ? 145 : 70}
         loading={loading || updateLoading || createSilenceLoading}
-        columns={GetAlertHistorycolumns({ token, updateRun, handleSilence })}
+        columns={GetAlertHistorycolumns({
+          token,
+          updateRun,
+          handleSilence,
+          handleView,
+          handleViewLoading: getAlertHistoryResult.loading,
+        })}
         dataSource={alertHistoryData?.list || []}
         pagination={{
           style: { marginRight: 16 },

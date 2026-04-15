@@ -1,6 +1,8 @@
 import {
+  AlertHistoryItem,
   AlertHistoryListRequest,
   AlertHistoryListResponse,
+  AlertHistoryRequest,
   AlertHistoryUpdateRequest,
   FiringCountByTenantResponse,
 } from "@/types/alert/history";
@@ -24,4 +26,10 @@ export function GetFiringCountByTenant(): Promise<
   FiringCountByTenantResponse[]
 > {
   return get<FiringCountByTenantResponse[]>("/api/v1/alertHistory/firingCount");
+}
+
+export function GetAlertHistory(
+  params: AlertHistoryRequest,
+): Promise<AlertHistoryItem> {
+  return get<AlertHistoryItem>(`/api/v1/alertHistory/${params.id}`);
 }

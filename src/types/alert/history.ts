@@ -1,4 +1,6 @@
 import dayjs from "dayjs"; // 确保引入了 dayjs
+import { AlertSilence } from "./silence";
+import { AlertSendRecord } from "./sendRecord";
 
 export interface AlertHistoryFormValues {
   // 搜索维度：对应左侧 Select
@@ -47,6 +49,32 @@ export const SEARCH_DIMENSIONS = [
   { label: "Pod", value: "pod", type: "input", isLabel: true },
 ];
 
+export interface AlertHistoryRequest {
+  id: number;
+}
+
+export interface AlertHistoryItem {
+  id: string;
+  createdAt: string;
+  fingerprint: string;
+  startsAt: string;
+  cluster: string;
+  status: "firing" | "resolved";
+  endsAt: string | null;
+  alertChannelId: number;
+  alertSendRecordID: number;
+  alertSilenceID: number;
+  alertname: string;
+  severity: string;
+  instance: string;
+  labels: Record<string, string>;
+  annotations: Record<string, string>;
+  sendCount: number;
+  isSilenced: boolean;
+  alertSendRecord: AlertSendRecord | null;
+  alertSilence: AlertSilence | null;
+}
+
 export interface AlertHistoryListRequest {
   page: number;
   pageSize: number;
@@ -68,28 +96,6 @@ export interface AlertHistoryListResponse {
   list: AlertHistoryItem[];
 }
 
-export interface AlertHistoryItem {
-  id: string;
-  createdAt: string;
-  fingerprint: string;
-  startsAt: string;
-  cluster: string;
-  status: "firing" | "resolved";
-  endsAt: string | null;
-  alertChannelId: number;
-  alertSendRecordID: number;
-  alertSilenceID: number;
-  alertname: string;
-  severity: string;
-  instance: string;
-  labels: Record<string, string>;
-  annotations: Record<string, string>;
-  sendCount: number;
-  isSilenced: boolean;
-  alertChannel: unknown | null;
-  alertSendRecord: unknown | null;
-  alertSilence: unknown | null;
-}
 export interface AlertHistoryUpdateRequest {
   status: string;
 }
