@@ -12,10 +12,10 @@ export type DataType = {
 
 export const ApiColumns = () => {
   return [
-    {
-      dataIndex: "id",
-      title: "ID",
-    },
+    // {
+    //   dataIndex: "id",
+    //   title: "ID",
+    // },
     {
       dataIndex: "name",
       title: "名称",
@@ -31,6 +31,16 @@ export const ApiColumns = () => {
       render: (text: string) => (
         <Tooltip placement="topLeft" title={text}>
           <span>{text}</span>
+        </Tooltip>
+      ),
+    },
+    {
+      dataIndex: "effect",
+      title: "效果",
+      ellipsis: true,
+      render: (effect: string) => (
+        <Tooltip placement="topLeft" title={effect}>
+          <span>{effect}</span>
         </Tooltip>
       ),
     },
@@ -86,6 +96,14 @@ export function ApiListColumns({
       width: 80,
       render: (text: string) => (
         <Tag color="geekblue">{text.toUpperCase()}</Tag>
+      ),
+    },
+    {
+      title: "效果",
+      dataIndex: "effect",
+      width: 80,
+      render: (effect: string) => (
+        <Tag color="geekblue">{effect.toUpperCase()}</Tag>
       ),
     },
     {

@@ -7,9 +7,7 @@ import {
 import { del, get, post, put } from "./http";
 import { ApiResponse } from "@/types";
 
-export function GetApiList(
-  params: ApiListRequest
-): Promise<ApiListResponse> {
+export function GetApiList(params: ApiListRequest): Promise<ApiListResponse> {
   return get<ApiListResponse>("/api/v1/api", params);
 }
 
@@ -23,7 +21,7 @@ export function DeleteApi(id: string): Promise<ApiResponse> {
 
 export function UpdateApi(
   id: string,
-  data: ApiUpdateRequest
+  data: ApiUpdateRequest,
 ): Promise<ApiResponse> {
   return put<ApiResponse>(`/api/v1/api/${id}`, data);
 }

@@ -27,17 +27,14 @@ const RoleEditComponent = ({
     {
       manual: true,
       onSuccess: (data) => {
-        console.log("roleData", data);
         form.setFieldsValue(data);
         setTargetKeys(data?.apis?.map((api) => api.id) || []);
       },
-    }
+    },
   );
 
   useEffect(() => {
-    console.log("useEffect", open, id);
     if (open && id) {
-      console.log("queryRoleRun");
       queryRoleRun(id);
       policyRun({ page: 0, pageSize: 0 });
     }
@@ -56,7 +53,7 @@ const RoleEditComponent = ({
         refreshRoleList();
         setConfirmLoading(false);
       },
-    }
+    },
   );
 
   const [targetKeys, setTargetKeys] = useState<React.Key[]>([]);
@@ -64,7 +61,6 @@ const RoleEditComponent = ({
   const drawerClose = () => {
     handleCancel();
     form.resetFields();
-    setTargetKeys([]);
     setConfirmLoading(false);
   };
 
@@ -76,6 +72,7 @@ const RoleEditComponent = ({
       });
     });
   };
+
   const getDrawerFooter = () => {
     return (
       <div className="flex justify-end gap-6 p-3">
@@ -103,8 +100,8 @@ const RoleEditComponent = ({
   return (
     <>
       <Drawer
-        destroyOnClose
-        width="70%"
+        destroyOnHidden
+        size="80%"
         loading={queryRoleloading}
         title="编辑角色信息"
         onClose={drawerClose}

@@ -3,10 +3,19 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import svgr from "vite-plugin-svgr";
+import monacoEditorPlugin from "vite-plugin-monaco-editor";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss(), svgr({ svgrOptions: { icon: true } })],
+  plugins: [
+    react(),
+    tailwindcss(),
+    svgr({ svgrOptions: { icon: true } }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (monacoEditorPlugin as any).default({
+      languageWorkers: ["json", "editorWorkerService"],
+    }),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -16,7 +25,6 @@ export default defineConfig({
     proxy: {
       "/api": {
         target: "https://qqlx.net",
-        // target: "http://10.0.0.5:8080",
         // target: "http://localhost:8080",
         changeOrigin: true,
         configure: (proxy) => {
