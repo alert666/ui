@@ -40,7 +40,7 @@ export default function EditUserComponent(props: EditUserProps) {
         setConfirmLoading(false);
         callback();
       },
-    }
+    },
   );
 
   const { run: roleListRun, data: roleListData } = useRequest(ListRole, {
@@ -85,7 +85,7 @@ export default function EditUserComponent(props: EditUserProps) {
   const drawerClose = () => {
     onCancel();
     form.resetFields();
-    setTargetKeys([]);
+    // setTargetKeys([]);
     setConfirmLoading(false);
   };
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -129,8 +129,8 @@ export default function EditUserComponent(props: EditUserProps) {
   return (
     <>
       <Drawer
-        destroyOnClose
-        width="60%"
+        destroyOnHidden
+        size="60%"
         loading={userLoad}
         title="编辑用户信息"
         onClose={drawerClose}

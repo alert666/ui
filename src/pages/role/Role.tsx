@@ -1,6 +1,6 @@
 import { DeleteRole, ListRole } from "@/services/role";
 import { useRequest, useUnmount } from "ahooks";
-import { Button, Input, Select } from "antd";
+import { Button, Input, Select, Space } from "antd";
 import { useEffect, useState } from "react";
 import { GetRolecolumns } from "@/types/role/role.tsx";
 import useApp from "antd/es/app/useApp";
@@ -10,7 +10,6 @@ import { useParams } from "@/hooks/useParams";
 import CreateRoleComponent from "@/components/role/CreateRole";
 import { SyncOutlined } from "@ant-design/icons";
 import { RoleListRequest } from "@/types/role/role";
-const { Search } = Input;
 const RolePage = () => {
   const { modal, message } = useApp();
   const { getParam, setParams, replaceParams, clearParams } = useParams();
@@ -53,7 +52,7 @@ const RolePage = () => {
 
   // // 搜索处理（点击搜索按钮时触发）
   const handleSearch = () => {
-    if (searchObject.value === null) {
+    if (!searchObject.value) {
       return;
     }
     setParams({
@@ -74,6 +73,7 @@ const RolePage = () => {
     replaceParams({
       page: page,
       pageSize: pageSize,
+      tenant: getParam("tenant") || localStorage.getItem("tanant") || "default",
     });
     run({
       page: Number(page),
@@ -116,38 +116,42 @@ const RolePage = () => {
     <div className="px-4">
       <div className="flex justify-between p-2">
         <div className="flex gap-4">
-          <Search
-            placeholder={`按名称前缀搜索`}
-            style={{ minWidth: "400px", maxWidth: "600px" }}
-            value={searchObject.value || ""}
-            onChange={(e) =>
-              setSearchObject((prev) => {
-                return {
-                  ...prev,
-                  value: e.target.value,
-                };
-              })
-            }
-            onSearch={handleSearch}
-            onClear={handleClear}
-            allowClear
-            addonBefore={
-              <Select
-                value={searchObject.key}
-                onChange={(val) => {
-                  setSearchObject((prev) => {
-                    return {
-                      ...prev,
-                      key: val,
-                    };
-                  });
-                }}
-                style={{ width: 100 }}
-              >
-                <Select.Option value="name">名称</Select.Option>
-              </Select>
-            }
-          />
+          <Space.Compact style={{ minWidth: "400px", maxWidth: "600px" }}>
+            <Select
+              options={[
+                {
+                  label: "名称",
+                  value: "name",
+                },
+              ]}
+              value={searchObject.key}
+              onChange={(val) => {
+                setSearchObject((prev) => {
+                  return {
+                    ...prev,
+                    key: val,
+                  };
+                });
+              }}
+              style={{ width: 100 }}
+            />
+            <Input.Search
+              placeholder={`按名称前缀搜索`}
+              style={{ width: "100%" }}
+              value={searchObject.value || ""}
+              onChange={(e) =>
+                setSearchObject((prev) => {
+                  return {
+                    ...prev,
+                    value: e.target.value,
+                  };
+                })
+              }
+              onSearch={handleSearch}
+              onClear={handleClear}
+              allowClear
+            />
+          </Space.Compact>
           <Button
             type="primary"
             onClick={() => {

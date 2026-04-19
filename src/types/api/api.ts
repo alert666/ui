@@ -11,6 +11,7 @@ export interface Api {
   path: string;
   method: string;
   description: string;
+  effect: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -28,6 +29,7 @@ export interface ApiCreateRequest {
   description: string;
   path: string;
   method: string;
+  effect: string;
 }
 
 export interface ApiUpdateRequest {

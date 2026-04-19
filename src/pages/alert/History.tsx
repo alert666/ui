@@ -177,6 +177,7 @@ const AlertHistoryPage = () => {
           <Tag
             key={dim.value}
             closable
+            color="cyan"
             onClose={() => {
               const p = new URLSearchParams(searchParams);
               p.delete(dim.value);

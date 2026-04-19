@@ -11,6 +11,7 @@ import { Role } from "./types/user/user";
 import Test from "./test/Test";
 import OAuthPage from "./pages/login/OAuth";
 import AlertHistoryPage from "./pages/alert/History";
+import AlertChannel from "./pages/channel/Channel";
 export type MenuItem = Required<MenuProps>["items"][number];
 
 const router = createBrowserRouter([
@@ -46,6 +47,10 @@ const router = createBrowserRouter([
                 path: "history",
                 Component: AlertHistoryPage,
               },
+              {
+                path: "channel",
+                Component: AlertChannel,
+              },
             ],
           },
         ],
@@ -70,59 +75,28 @@ const router = createBrowserRouter([
   },
 ]);
 
-const menuItem: MenuItem[] = [];
-
-const adminMemuItem: MenuItem[] = [
+const commonMenuItem: MenuItem[] = [
   {
     key: "ram",
-    icon: null,
     label: "用户",
     children: [
-      {
-        key: "user",
-        icon: null,
-        label: "用户列表",
-      },
-      {
-        key: "role",
-        icon: null,
-        label: "角色列表",
-      },
-      {
-        key: "api",
-        icon: null,
-        label: "API列表",
-      },
+      { key: "user", label: "用户列表" },
+      { key: "role", label: "角色列表" },
+      { key: "api", label: "API列表" },
     ],
   },
   {
     key: "alert",
-    icon: null,
     label: "告警",
     children: [
-      {
-        key: "history",
-        icon: null,
-        label: "告警历史",
-      },
+      { key: "history", label: "告警历史" },
+      { key: "channel", label: "告警通道" },
     ],
   },
 ];
 
 const GetMemuItem = (_: Role[]): MenuItem[] => {
-  const menum: MenuItem[] = [];
-  menum.push(...adminMemuItem);
-  // roles.some((role) => {
-  //   if (role.name === "admin" || role.id === "1") {
-  //     menum.push(...adminMemuItem);
-  //   }
-  // });
-
-  if (menuItem.length > 0) {
-    menum.push(...menuItem);
-  }
-
-  return menum;
+  return commonMenuItem;
 };
 
 export { GetMemuItem };
