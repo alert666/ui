@@ -67,10 +67,20 @@ function AlertChannel() {
 
   // 同步 URL 参数到列表请求
   useEffect(() => {
-    const page =
-      searchParams.get("page") || PageOptionEnum.DEFAULTPAGE.toString();
-    const pageSize =
-      searchParams.get("pageSize") || PageOptionEnum.DEFAULTPAGESIZE.toString();
+    const page = searchParams.get("page");
+    const pageSize = searchParams.get("pageSize");
+
+    if (!page || !pageSize) {
+      const newParams = new URLSearchParams(searchParams);
+      if (!page) newParams.set("page", PageOptionEnum.DEFAULTPAGE.toString());
+      if (!pageSize)
+        newParams.set("pageSize", PageOptionEnum.DEFAULTPAGESIZE.toString());
+      // 更新 URL，replace: true 保证不会产生多余的浏览器历史记录
+      // 这一步执行后，useEffect 会因为 searchParams 改变而再次触发
+      setSearchParams(newParams, { replace: true });
+      // 🌟 关键：补全 URL 期间直接返回，拦截本次不完整的请求
+      return;
+    }
     const type = searchParams.get("type") as GetAlertChannelListRequest["type"];
     const name = searchParams.get("name");
 

@@ -1,222 +1,231 @@
 import { DeleteRole, ListRole } from "@/services/role";
-import { useRequest, useUnmount } from "ahooks";
-import { Button, Input, Select, Space } from "antd";
-import { useEffect, useState } from "react";
-import { GetRolecolumns } from "@/types/role/role.tsx";
-import useApp from "antd/es/app/useApp";
-import RoleEditComponent from "@/components/role/RoleEdit";
-import DynamicTable from "@/components/base/DynamicTable";
-import { useParams } from "@/hooks/useParams";
-import CreateRoleComponent from "@/components/role/CreateRole";
-import { SyncOutlined } from "@ant-design/icons";
 import { RoleListRequest } from "@/types/role/role";
+import { GetRolecolumns } from "@/types/role/role.tsx";
+import { PlusOutlined, SearchOutlined, SyncOutlined } from "@ant-design/icons";
+import { useRequest } from "ahooks";
+import { App, Button, Form, Input, Select, Space, Tag, theme } from "antd";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import DynamicTable from "@/components/base/DynamicTable";
+import CreateRoleComponent from "@/components/role/CreateRole";
+import RoleEditComponent from "@/components/role/RoleEdit";
+import { PageOptionEnum } from "@/types/enum";
+
+// 定义搜索维度
+const ROLE_SEARCH_DIMENSIONS = [
+  { label: "角色名称", value: "name", type: "input" },
+  // 如果未来有其他搜索维度（如 code），可以在此直接添加
+];
+
 const RolePage = () => {
-  const { modal, message } = useApp();
-  const { getParam, setParams, replaceParams, clearParams } = useParams();
-  const page = getParam("page") || "1";
-  const pageSize = getParam("pageSize") || "10";
-  const name = getParam("name");
-  const [searchObject, setSearchObject] = useState({
-    key: "name",
-    value: name,
-  });
+  const { modal, message } = App.useApp();
+  const { token } = theme.useToken();
+  const [searchForm] = Form.useForm();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const {
-    data: roleData,
-    loading: roleLoad,
-    refresh: refreshRoleList,
-    run,
-  } = useRequest(ListRole, {
-    manual: true,
-  });
+  // 1. 列表请求
+  const listRoleRes = useRequest(ListRole, { manual: true });
 
-  const { run: delRun, loading: delLoad } = useRequest(DeleteRole, {
+  // 2. 删除请求
+  const deleteRoleRes = useRequest(DeleteRole, {
     manual: true,
-    debounceWait: 500,
     onSuccess: () => {
       message.success("删除成功");
-      refreshRoleList();
+      listRoleRes.refresh();
     },
   });
 
+  // 3. 弹窗状态
+  const [editOpen, setEditOpen] = useState(false);
   const [roleId, setRoleId] = useState("");
-  const [editOpen, setEditOpen] = useState<boolean>(false);
+  const [createRoleOpen, setCreateRoleOpen] = useState(false);
 
-  // // 分页变化处理
-  const handlePageChange = (page: number, size: number) => {
-    setParams({
-      page: page.toString(),
-      pageSize: size.toString(),
-    });
-  };
-
-  // // 搜索处理（点击搜索按钮时触发）
-  const handleSearch = () => {
-    if (!searchObject.value) {
+  // 核心逻辑：监听 URL 参数并同步请求
+  useEffect(() => {
+    const page = searchParams.get("page");
+    const pageSize = searchParams.get("pageSize");
+    if (!page || !pageSize) {
+      const newParams = new URLSearchParams(searchParams);
+      if (!page) newParams.set("page", PageOptionEnum.DEFAULTPAGE.toString());
+      if (!pageSize)
+        newParams.set("pageSize", PageOptionEnum.DEFAULTPAGESIZE.toString());
+      // 更新 URL，replace: true 保证不会产生多余的浏览器历史记录
+      // 这一步执行后，useEffect 会因为 searchParams 改变而再次触发
+      setSearchParams(newParams, { replace: true });
+      // 🌟 关键：补全 URL 期间直接返回，拦截本次不完整的请求
       return;
     }
-    setParams({
-      [searchObject.key]: searchObject.value,
-    });
-    run({
-      page: Number(page),
-      pageSize: Number(pageSize),
-      [searchObject.key]: searchObject.value,
-    });
-  };
 
-  const handleClear = () => {
-    setSearchObject({
-      key: "name",
-      value: "",
-    });
-    replaceParams({
-      page: page,
-      pageSize: pageSize,
-      tenant: getParam("tenant") || localStorage.getItem("tanant") || "default",
-    });
-    run({
-      page: Number(page),
-      pageSize: Number(pageSize),
-    });
-  };
+    const name = searchParams.get("name");
 
-  const [createRoleOpen, setCreateRoleOpen] = useState<boolean>(false);
-
-  const runList = () => {
     const params: RoleListRequest = {
       page: Number(page),
       pageSize: Number(pageSize),
+      name: name || undefined,
     };
-    setSearchObject((prev) => {
-      if (prev.value !== null) {
-        switch (prev.key) {
-          case "name":
-            params.name = prev.value || "";
-            break;
-          default:
-            break;
-        }
-      }
-      run(params);
-      return prev;
-    });
+
+    listRoleRes.run(params);
+  }, [searchParams]);
+
+  // 搜索提交
+  const onHandleSearch = (values: {
+    searchKey: string;
+    searchValue: string;
+  }) => {
+    const { searchKey, searchValue } = values;
+    const newParams = new URLSearchParams(searchParams);
+
+    newParams.set("page", "1"); // 搜索时重置回第一页
+
+    // 清除旧的搜索键值，设置新的
+    ROLE_SEARCH_DIMENSIONS.forEach((dim) => newParams.delete(dim.value));
+
+    if (searchValue) {
+      newParams.set(searchKey, searchValue);
+    }
+    setSearchParams(newParams);
+
+    searchForm.resetFields();
   };
 
-  useEffect(() => {
-    setParams({ page: page, pageSize: pageSize });
-    runList();
-  }, [page, pageSize]);
+  // 重置搜索
+  const handleReset = () => {
+    searchForm.resetFields();
+    setSearchParams({ page: "1", pageSize: "10" });
+  };
 
-  useUnmount(() => {
-    clearParams();
-  });
+  // 筛选标签渲染
+  const renderFilterTags = useMemo(() => {
+    return ROLE_SEARCH_DIMENSIONS.map((item) => {
+      const val = searchParams.get(item.value);
+      if (!val) return null;
+      return (
+        <Tag
+          key={item.value}
+          closable
+          color="blue"
+          onClose={() => {
+            const p = new URLSearchParams(searchParams);
+            p.delete(item.value);
+            setSearchParams(p);
+          }}
+        >
+          {item.label}: {val}
+        </Tag>
+      );
+    }).filter(Boolean);
+  }, [searchParams]);
 
   return (
-    <div className="px-4">
-      <div className="flex justify-between p-2">
-        <div className="flex gap-4">
-          <Space.Compact style={{ minWidth: "400px", maxWidth: "600px" }}>
-            <Select
-              options={[
-                {
-                  label: "名称",
-                  value: "name",
-                },
-              ]}
-              value={searchObject.key}
-              onChange={(val) => {
-                setSearchObject((prev) => {
-                  return {
-                    ...prev,
-                    key: val,
-                  };
-                });
-              }}
-              style={{ width: 100 }}
-            />
-            <Input.Search
-              placeholder={`按名称前缀搜索`}
-              style={{ width: "100%" }}
-              value={searchObject.value || ""}
-              onChange={(e) =>
-                setSearchObject((prev) => {
-                  return {
-                    ...prev,
-                    value: e.target.value,
-                  };
-                })
-              }
-              onSearch={handleSearch}
-              onClear={handleClear}
-              allowClear
-            />
-          </Space.Compact>
+    <div className="p-4">
+      {/* 搜索栏 */}
+      <div
+        className="mb-4 p-4"
+        style={{
+          backgroundColor: token.colorBgContainer,
+          borderRadius: token.borderRadiusLG,
+          border: `1px solid ${token.colorBorderSecondary}`,
+          boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
+        }}
+      >
+        <div className="flex justify-between items-start">
+          <Form
+            form={searchForm}
+            onFinish={onHandleSearch}
+            initialValues={{ searchKey: "name" }}
+          >
+            <Space.Compact>
+              <Form.Item name="searchKey" noStyle>
+                <Select
+                  style={{ width: 110 }}
+                  options={ROLE_SEARCH_DIMENSIONS.map((d) => ({
+                    label: d.label,
+                    value: d.value,
+                  }))}
+                />
+              </Form.Item>
+              <Form.Item name="searchValue" noStyle>
+                <Input
+                  style={{ width: 220 }}
+                  placeholder="输入名称搜索..."
+                  allowClear
+                  onPressEnter={() => searchForm.submit()}
+                  prefix={<SearchOutlined />}
+                />
+              </Form.Item>
+              <Button type="primary" onClick={() => searchForm.submit()}>
+                搜索
+              </Button>
+              <Button onClick={handleReset}>重置</Button>
+              <Button
+                type="text"
+                icon={<SyncOutlined spin={listRoleRes.loading} />}
+                onClick={() => listRoleRes.refresh()}
+              />
+            </Space.Compact>
+          </Form>
+
           <Button
             type="primary"
-            onClick={() => {
-              setCreateRoleOpen(true);
-            }}
+            icon={<PlusOutlined />}
+            onClick={() => setCreateRoleOpen(true)}
           >
             创建角色
           </Button>
         </div>
-        <div className="pr-3">
-          <Button icon={<SyncOutlined />} onClick={() => refreshRoleList()} />
-        </div>
+
+        {renderFilterTags.length > 0 && (
+          <div
+            className="mt-3 pt-3 border-t border-dashed"
+            style={{ borderColor: token.colorBorderSecondary }}
+          >
+            <Space wrap>{renderFilterTags}</Space>
+          </div>
+        )}
       </div>
 
+      {/* 数据表格 */}
       <DynamicTable
-        extraHeight={80}
-        loading={roleLoad}
+        loading={listRoleRes.loading}
+        dataSource={listRoleRes.data?.list || []}
         columns={GetRolecolumns({
           setRoleId,
           modal,
           message,
-          delRun,
+          delRun: deleteRoleRes.run,
+          delLoad: deleteRoleRes.loading,
           setEditOpen,
-          delLoad,
         })}
-        locale={{
-          emptyText: "暂无数据",
-          triggerAsc: "点击升序",
-          triggerDesc: "点击降序",
-          cancelSort: "取消排序",
-        }}
-        dataSource={roleData?.list || []}
         pagination={{
-          pageSizeOptions: ["10", "20", "50", "100"],
-          showTotal: (total, range) =>
-            `${range[0]}-${range[1]} 条，共 ${total} 条数据`,
-          current: Number(page),
-          pageSize: Number(pageSize),
-          total: roleData?.total || 0,
+          current: Number(searchParams.get("page")) || 1,
+          pageSize: Number(searchParams.get("pageSize")) || 10,
+          total: listRoleRes.data?.total || 0,
           showSizeChanger: true,
-          onChange: handlePageChange,
-          locale: {
-            items_per_page: "条/页",
-            jump_to: "跳至",
-            page: "页",
+          showTotal: (total) => `共 ${total} 条数据`,
+          onChange: (p, s) => {
+            const params = new URLSearchParams(searchParams);
+            params.set("page", p.toString());
+            params.set("pageSize", s.toString());
+            setSearchParams(params);
           },
         }}
         bordered
       />
+
+      {/* 弹窗组件 */}
       <RoleEditComponent
         id={roleId}
         message={message}
-        refreshRoleList={refreshRoleList}
+        refreshRoleList={listRoleRes.refresh}
         open={editOpen}
-        handleCancel={() => {
-          setEditOpen(false);
-        }}
+        handleCancel={() => setEditOpen(false)}
       />
+
       <CreateRoleComponent
         open={createRoleOpen}
         message={message}
-        onClose={() => {
-          setCreateRoleOpen(false);
-        }}
-        refreshRoleList={refreshRoleList}
+        onClose={() => setCreateRoleOpen(false)}
+        refreshRoleList={listRoleRes.refresh}
       />
     </div>
   );

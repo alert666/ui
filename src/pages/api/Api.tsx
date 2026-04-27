@@ -1,233 +1,261 @@
 import CreateApiComponent from "@/components/api/CreatePolicy";
-import { DeleteApi, GetApiList } from "@/services/api";
-import { useRequest } from "ahooks";
-import { SyncOutlined } from "@ant-design/icons";
-import { Button, Select } from "antd";
-import { useEffect, useState } from "react";
-import DynamicTable from "@/components/base/DynamicTable";
-import { ApiListColumns } from "@/types/api/api.tsx";
-import { useParams } from "@/hooks/useParams";
-import useApp from "antd/es/app/useApp";
-import Search from "antd/es/input/Search";
 import UpdatePolicyComponent from "@/components/api/UpdatePolicy";
+import DynamicTable from "@/components/base/DynamicTable";
+import { DeleteApi, GetApiList } from "@/services/api";
 import { Api, ApiListRequest } from "@/types/api/api";
+import { ApiListColumns } from "@/types/api/api.tsx";
+import { PageOptionEnum } from "@/types/enum";
+import { PlusOutlined, SearchOutlined, SyncOutlined } from "@ant-design/icons";
+import { useRequest } from "ahooks";
+import { App, Button, Form, Input, Select, Space, Tag, theme } from "antd";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+
+// 定义搜索维度
+const SEARCH_DIMENSIONS = [
+  { label: "名称", value: "name", type: "input" },
+  { label: "路径", value: "path", type: "input" },
+  {
+    label: "方法",
+    value: "method",
+    type: "select",
+    options: [
+      { label: "GET", value: "GET" },
+      { label: "POST", value: "POST" },
+      { label: "PUT", value: "PUT" },
+      { label: "DELETE", value: "DELETE" },
+      { label: "PATCH", value: "PATCH" },
+    ],
+  },
+];
+
 const PolicyPage = () => {
-  const { modal, message } = useApp();
-  const { getParam, setParams, replaceParams } = useParams();
-  const page = getParam("page") || "1";
-  const pageSize = getParam("pageSize") || "10";
-  const searchName = getParam("name") || "";
-  const searchPath = getParam("path") || "";
-  const searchMethod = getParam("method") || "";
-  const [searchObject, setSearchObject] = useState({
-    key: "name",
-    value: searchName,
-  });
+  const { modal, message } = App.useApp();
+  const { token } = theme.useToken();
+  const [searchForm] = Form.useForm();
+  const activeKey = Form.useWatch("searchKey", searchForm);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const {
-    run: apiListRun,
-    data: apiListData,
-    loading: apiListLoading,
-    refresh: apiListRefresh,
-  } = useRequest(GetApiList, {
-    manual: true,
-  });
-
-  // 搜索处理（点击搜索按钮时触发）
-  const handleSearch = () => {
-    if (searchObject.value === "") {
-      return;
-    }
-    replaceParams({
-      page: page,
-      pageSize: pageSize,
-      [searchObject.key]: searchObject.value,
-    });
-    apiListRun({
-      page: Number(page),
-      pageSize: Number(pageSize),
-      [searchObject.key]: searchObject.value,
-    });
-  };
-
-  const handleClear = () => {
-    setSearchObject((prev) => {
-      return {
-        ...prev,
-        value: "",
-      };
-    });
-    replaceParams({
-      page: page,
-      pageSize: pageSize,
-    });
-    apiListRun({
-      page: Number(page),
-      pageSize: Number(pageSize),
-    });
-  };
-
-  // 分页变化处理
-  const handlePageChange = (page: number, size: number) => {
-    setParams({
-      page: page.toString(),
-      pageSize: size.toString(),
-    });
-  };
-
+  // 弹窗状态
   const [createApiOpen, setCreateApiOpen] = useState(false);
-  const { run: deleteApiRun, loading: deleteApiLoad } = useRequest(DeleteApi, {
-    manual: true,
-    onSuccess: () => {
-      apiListRefresh();
-    },
-  });
-
   const [updateApiOpen, setUpdateApiOpen] = useState(false);
   const [updateApiData, setUpdateApiData] = useState({} as Api);
 
-  const runList = () => {
+  // 1. 获取列表请求
+  const apiListRes = useRequest(GetApiList, { manual: true });
+
+  // 2. 删除请求
+  const deleteApiRes = useRequest(DeleteApi, {
+    manual: true,
+    onSuccess: () => {
+      message.success("删除成功");
+      apiListRes.refresh();
+    },
+  });
+
+  // 核心逻辑：监听 URL 参数变化并触发请求
+  useEffect(() => {
+    const page = searchParams.get("page");
+    const pageSize = searchParams.get("pageSize");
+
+    if (!page || !pageSize) {
+      const newParams = new URLSearchParams(searchParams);
+      if (!page) newParams.set("page", PageOptionEnum.DEFAULTPAGE.toString());
+      if (!pageSize)
+        newParams.set("pageSize", PageOptionEnum.DEFAULTPAGESIZE.toString());
+      // 更新 URL，replace: true 保证不会产生多余的浏览器历史记录
+      // 这一步执行后，useEffect 会因为 searchParams 改变而再次触发
+      setSearchParams(newParams, { replace: true });
+      // 🌟 关键：补全 URL 期间直接返回，拦截本次不完整的请求
+      return;
+    }
+
     const params: ApiListRequest = {
       page: Number(page),
       pageSize: Number(pageSize),
+      name: searchParams.get("name") || undefined,
+      path: searchParams.get("path") || undefined,
+      method: searchParams.get("method") || undefined,
     };
-    setSearchObject((prev) => {
-      if (prev.value !== null) {
-        switch (prev.key) {
-          case "name":
-            params.name = prev.value || "";
-            break;
-          case "path":
-            params.path = prev.value || "";
-            break;
-          case "method":
-            params.method = prev.value || "";
-            break;
-          default:
-            break;
-        }
-      }
-      apiListRun(params);
-      return prev;
-    });
+
+    apiListRes.run(params);
+  }, [searchParams]);
+
+  // 处理搜索提交
+  const onHandleSearch = (values: {
+    searchKey: string;
+    searchValue: string;
+  }) => {
+    const { searchKey, searchValue } = values;
+    const newParams = new URLSearchParams(searchParams);
+
+    // 搜索时重置页码，并清除之前旧的搜索键值对
+    newParams.set("page", "1");
+    SEARCH_DIMENSIONS.forEach((dim) => newParams.delete(dim.value));
+
+    if (searchValue) {
+      newParams.set(searchKey, searchValue);
+    }
+    setSearchParams(newParams);
+    searchForm.resetFields();
   };
 
-  useEffect(() => {
-    if (searchName !== "") {
-      setSearchObject({
-        key: "name",
-        value: searchName,
-      });
-    } else if (searchPath !== "") {
-      setSearchObject({
-        key: "path",
-        value: searchPath,
-      });
-    } else if (searchMethod !== "") {
-      setSearchObject({
-        key: "method",
-        value: searchMethod,
-      });
+  // 重置搜索
+  const handleReset = () => {
+    if (searchForm) {
+      searchForm.resetFields();
+      setSearchParams({ page: "1", pageSize: "10" });
     }
-  }, [searchName, searchPath, searchMethod]);
+  };
 
-  useEffect(() => {
-    setParams({
-      page: page,
-      pageSize: pageSize,
-    });
-    runList();
-  }, [page, pageSize]);
+  // 渲染筛选标签
+  const renderFilterTags = useMemo(() => {
+    return SEARCH_DIMENSIONS.map((item) => {
+      const val = searchParams.get(item.value);
+      if (!val) return null;
+      return (
+        <Tag
+          key={item.value}
+          closable
+          color="blue"
+          onClose={() => {
+            const p = new URLSearchParams(searchParams);
+            p.delete(item.value);
+            setSearchParams(p);
+          }}
+        >
+          {item.label}: {val}
+        </Tag>
+      );
+    }).filter(Boolean);
+  }, [searchParams]);
+
+  // 动态搜索输入框
+  const SearchInput = () => {
+    const currentDim =
+      SEARCH_DIMENSIONS.find((d) => d.value === activeKey) ||
+      SEARCH_DIMENSIONS[0];
+    if (currentDim.type === "select") {
+      return (
+        <Select
+          style={{ width: 160 }}
+          placeholder="请选择"
+          options={currentDim.options}
+          allowClear
+          onChange={() => searchForm.submit()}
+        />
+      );
+    }
+    return (
+      <Input
+        style={{ width: 220 }}
+        placeholder={`输入${currentDim.label}前缀搜索...`}
+        allowClear
+        onPressEnter={() => searchForm.submit()}
+      />
+    );
+  };
+
   return (
-    <div className="px-4">
-      <div className="flex justify-between p-2">
-        <div className="flex gap-4">
-          <Search
-            placeholder="名称前缀搜索"
-            value={searchObject.value}
-            onChange={(e) =>
-              setSearchObject({
-                key: searchObject.key,
-                value: e.target.value,
-              })
-            }
-            onSearch={handleSearch}
-            onClear={handleClear}
-            allowClear
-            addonBefore={
-              <Select
-                value={searchObject.key}
-                onChange={(val) => {
-                  setSearchObject({
-                    key: val,
-                    value: searchObject.value,
-                  });
-                }}
-                style={{ width: 100 }}
-              >
-                <Select.Option value="name">名称</Select.Option>
-                <Select.Option value="path">路径</Select.Option>
-                <Select.Option value="method">方法</Select.Option>
-              </Select>
-            }
-          />
+    <div className="p-4">
+      {/* 搜索与操作栏 */}
+      <div
+        className="mb-4 p-4"
+        style={{
+          backgroundColor: token.colorBgContainer,
+          borderRadius: token.borderRadiusLG,
+          border: `1px solid ${token.colorBorderSecondary}`,
+        }}
+      >
+        <div className="flex justify-between items-start">
+          <Form
+            form={searchForm}
+            onFinish={onHandleSearch}
+            initialValues={{ searchKey: "name" }}
+          >
+            <Space.Compact>
+              <Form.Item name="searchKey" noStyle>
+                <Select
+                  style={{ width: 100 }}
+                  options={SEARCH_DIMENSIONS.map((d) => ({
+                    label: d.label,
+                    value: d.value,
+                  }))}
+                />
+              </Form.Item>
+              <Form.Item name="searchValue" noStyle>
+                {SearchInput()}
+              </Form.Item>
+              <Button
+                type="primary"
+                icon={<SearchOutlined />}
+                onClick={() => searchForm.submit()}
+              />
+              <Button onClick={handleReset}>重置</Button>
+              <Button
+                type="text"
+                icon={<SyncOutlined spin={apiListRes.loading} />}
+                onClick={() => apiListRes.refresh()}
+              />
+            </Space.Compact>
+          </Form>
+
           <Button
             type="primary"
-            onClick={() => {
-              setCreateApiOpen(true);
-            }}
+            icon={<PlusOutlined />}
+            onClick={() => setCreateApiOpen(true)}
           >
-            创建API
+            创建 API
           </Button>
         </div>
-        <div className="pr-3">
-          <Button icon={<SyncOutlined />} onClick={() => apiListRefresh()} />
-        </div>
+
+        {renderFilterTags.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-dashed border-gray-200">
+            <Space wrap>{renderFilterTags}</Space>
+          </div>
+        )}
       </div>
 
+      {/* 数据表格 */}
       <DynamicTable
-        extraHeight={80}
-        loading={apiListLoading}
+        loading={apiListRes.loading}
+        dataSource={apiListRes.data?.list || []}
         columns={ApiListColumns({
           modal,
           message,
-          deleteApiRun,
-          deleteApiLoad,
+          deleteApiRun: deleteApiRes.run,
+          deleteApiLoad: deleteApiRes.loading,
           setUpdateApiOpen,
           setUpdateApiData,
         })}
-        dataSource={apiListData?.list || []}
         pagination={{
-          pageSizeOptions: ["10", "20", "50", "100"],
-          showTotal: (total, range) =>
-            `${range[0]}-${range[1]} 条，共 ${total} 条数据`,
-          current: Number(page),
-          pageSize: Number(pageSize),
-          total: apiListData?.total || 0,
+          current: Number(searchParams.get("page")) || 1,
+          pageSize: Number(searchParams.get("pageSize")) || 10,
+          total: apiListRes.data?.total || 0,
           showSizeChanger: true,
-          onChange: handlePageChange,
-          locale: {
-            items_per_page: "条/页",
-            jump_to: "跳至",
-            page: "页",
+          showTotal: (total) => `共 ${total} 条数据`,
+          onChange: (p, s) => {
+            const params = new URLSearchParams(searchParams);
+            params.set("page", p.toString());
+            params.set("pageSize", s.toString());
+            setSearchParams(params);
           },
         }}
         bordered
       />
+
+      {/* 弹窗组件 */}
       <UpdatePolicyComponent
         open={updateApiOpen}
         data={updateApiData}
-        onCancel={() => {
-          setUpdateApiOpen(false);
-        }}
-        refresh={apiListRefresh}
+        onCancel={() => setUpdateApiOpen(false)}
+        refresh={apiListRes.refresh}
       />
+
       <CreateApiComponent
         open={createApiOpen}
-        onCancel={() => {
-          setCreateApiOpen(false);
-        }}
-        refresh={apiListRefresh}
+        onCancel={() => setCreateApiOpen(false)}
+        refresh={apiListRes.refresh}
       />
     </div>
   );

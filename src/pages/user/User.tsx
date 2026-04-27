@@ -1,138 +1,47 @@
-import { useMount, useRequest, useUnmount } from "ahooks";
-import { Button, Input, Modal, Select } from "antd";
-import { useEffect, useState } from "react";
-import { UserDelete, UserList, UserUpdateByAdmin } from "@/services/user";
-import CreateUserModal from "@/components/user/CreateUserModal";
-import useApp from "antd/es/app/useApp";
+import { PlusOutlined, SearchOutlined, SyncOutlined } from "@ant-design/icons";
+import { useRequest } from "ahooks";
+import {
+  App,
+  Button,
+  Form,
+  Input,
+  Modal,
+  Select,
+  Space,
+  Tag,
+  theme,
+  Typography,
+} from "antd";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
+
+// 业务组件与类型
 import DynamicTable from "@/components/base/DynamicTable";
-import { userListRequest, UserListResponseItem } from "@/types/user/user";
-import { useParams } from "@/hooks/useParams";
-import { GetUserColumn } from "@/types/user/user.tsx";
+import CreateUserModal from "@/components/user/CreateUserModal";
 import EditUserComponent from "@/components/user/EditUser";
-import { SyncOutlined } from "@ant-design/icons";
-const { Search } = Input;
+import { UserDelete, UserList, UserUpdateByAdmin } from "@/services/user";
+import { GetUserColumn } from "@/types/user/user.tsx";
+import { userListRequest, UserListResponseItem } from "@/types/user/user";
+import { PageOptionEnum } from "@/types/enum";
+
+const { Text } = Typography;
+
+const USER_SEARCH_DIMENSIONS = [
+  { label: "名称", value: "name" },
+  { label: "邮箱", value: "email" },
+  { label: "手机号", value: "mobile" },
+  { label: "部门", value: "department" },
+];
+
 const UserPage = () => {
-  const { modal, message } = useApp();
-  const { getParam, setParams, replaceParams, clearParams } = useParams();
-  const page = getParam("page") || "1";
-  const pageSize = getParam("pageSize") || "10";
-  const name = getParam("name");
-  const email = getParam("email");
-  const mobile = getParam("mobile");
-  const department = getParam("department");
+  const { modal, message } = App.useApp();
+  const { token } = theme.useToken();
+  const [searchForm] = Form.useForm();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [userStatus, setUserStatus] = useState<number>(0);
-  const [searchObject, setSearchObject] = useState({
-    key: "name",
-    value: name,
-  });
-
-  const runList = () => {
-    const params: userListRequest = {
-      page: page,
-      pageSize: pageSize,
-      status: userStatus,
-    };
-
-    setSearchObject((prev) => {
-      if (prev.value !== null) {
-        switch (prev.key) {
-          case "name":
-            params.name = prev.value || "";
-            break;
-          case "email":
-            params.email = prev.value || "";
-            break;
-          case "mobile":
-            params.mobile = prev.value || "";
-            break;
-          case "department":
-            params.department = prev.value || "";
-            break;
-          default:
-            break;
-        }
-      }
-      run(params);
-      return prev;
-    });
-  };
-
-  // 数据请求（自动依赖分页参数）
-  const {
-    data,
-    loading,
-    refresh: refreshUserList,
-    run,
-  } = useRequest(UserList, {
-    manual: true,
-  });
-
-  const { run: delUserRun, loading: delUserLoad } = useRequest(UserDelete, {
-    manual: true,
-    onSuccess: () => {
-      refreshUserList();
-    },
-  });
-
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editId, setEditId] = useState("");
-  const editUserOpen = (id: string) => {
-    setIsEditOpen(true);
-    setEditId(id);
-  };
-  const cancelEditUser = () => {
-    setIsEditOpen(false);
-    setEditId("");
-  };
-
-  const handleSearch = () => {
-    if (searchObject.value === null) {
-      return;
-    }
-    replaceParams({
-      page: page,
-      pageSize: pageSize,
-      [searchObject.key]: searchObject.value,
-    });
-    runList();
-  };
-
-  const handleClear = () => {
-    setSearchObject((prev) => {
-      return {
-        ...prev,
-        value: "",
-      };
-    });
-    replaceParams({
-      page: page,
-      pageSize: pageSize,
-    });
-    run({
-      page: page,
-      pageSize: pageSize,
-    });
-  };
-
-  const { run: updateUserRun, loading: updateUserLoad } = useRequest(
-    UserUpdateByAdmin,
-    {
-      manual: true,
-      onSuccess: () => {
-        message.success("更新成功");
-        refreshUserList();
-      },
-    },
-  );
-
-  const handlePageChange = (page: number, pageSize: number) => {
-    setParams({
-      page: page.toString(),
-      pageSize: pageSize.toString(),
-    });
-  };
-
   const [restUserPWDState, setRestUserPWDState] = useState({
     open: false,
     id: "",
@@ -140,171 +49,296 @@ const UserPage = () => {
     name: "",
   });
 
-  useMount(() => {
-    setParams({ page: page, pageSize: pageSize });
+  const userListReq = useRequest(UserList, { manual: true });
+
+  const delUserReq = useRequest(UserDelete, {
+    manual: true,
+    onSuccess: () => {
+      message.success("删除成功");
+      userListReq.refresh();
+    },
   });
 
-  useUnmount(() => {
-    clearParams();
+  const updateUserReq = useRequest(UserUpdateByAdmin, {
+    manual: true,
+    onSuccess: () => {
+      message.success("操作成功");
+      userListReq.refresh();
+      setRestUserPWDState((prev) => ({ ...prev, open: false, password: "" }));
+    },
   });
 
+  // 1. 核心数据同步逻辑
   useEffect(() => {
-    if (email) {
-      setSearchObject({ key: "email", value: email });
-    } else if (mobile) {
-      setSearchObject({ key: "mobile", value: mobile });
-    } else if (department) {
-      setSearchObject({ key: "department", value: department });
-    } else if (name) {
-      setSearchObject({ key: "name", value: name || "" });
+    const page = searchParams.get("page");
+    const pageSize = searchParams.get("pageSize");
+
+    // 补全默认分页参数
+    if (!page || !pageSize) {
+      const newParams = new URLSearchParams(searchParams);
+      if (!page) newParams.set("page", PageOptionEnum.DEFAULTPAGE.toString());
+      if (!pageSize)
+        newParams.set("pageSize", PageOptionEnum.DEFAULTPAGESIZE.toString());
+      setSearchParams(newParams, { replace: true });
+      return;
     }
-  }, [email, mobile, department, name]);
 
-  useEffect(() => {
-    runList();
-  }, [page, pageSize, userStatus]);
+    const params: userListRequest = {
+      page,
+      pageSize,
+      status: Number(searchParams.get("status")) || 0,
+      name: searchParams.get("name") || undefined,
+      email: searchParams.get("email") || undefined,
+      mobile: searchParams.get("mobile") || undefined,
+      department: searchParams.get("department") || undefined,
+    };
+
+    userListReq.run(params);
+
+    // 只有当 Form 没被触摸（没有脏数据）时，或者 URL 变化时才同步 Form
+    // 这样可以避免在输入时被 URL 强制覆盖
+    const activeDim = USER_SEARCH_DIMENSIONS.find((d) =>
+      searchParams.has(d.value),
+    );
+    const activeKey = activeDim?.value || "name";
+
+    searchForm.setFieldsValue({
+      status: params.status,
+      searchKey: activeKey,
+      searchValue: searchParams.get(activeKey) || "",
+    });
+  }, [searchParams, searchForm]);
+
+  // 2. 优化后的搜索处理
+  const onHandleSearch = useCallback(
+    (values: any) => {
+      const { status, searchKey, searchValue } = values;
+      const newParams = new URLSearchParams(searchParams); // 继承当前所有参数（含 pageSize）
+
+      newParams.set("page", "1"); // 搜索永远重置到第一页
+      newParams.set("status", status?.toString() || "0");
+
+      // 清除所有旧的搜索维度，避免 name=1&email=2 的冲突
+      USER_SEARCH_DIMENSIONS.forEach((d) => newParams.delete(d.value));
+
+      if (searchValue) {
+        newParams.set(searchKey, searchValue);
+      }
+
+      setSearchParams(newParams);
+      // 这里不需要 resetFields，因为上面的 useEffect 会负责同步。
+      // 如果你点击搜索后想让输入框变空，逻辑上是不合理的，因为用户需要看到当前的过滤条件。
+    },
+    [searchParams, setSearchParams],
+  );
+
+  // 3. 重置逻辑
+  const handleReset = () => {
+    searchForm.resetFields();
+    setSearchParams({
+      page: "1",
+      pageSize: searchParams.get("pageSize") || "10",
+      status: "0",
+    });
+  };
+
+  const handlePageChange = (p: number, s: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("page", p.toString());
+    params.set("pageSize", s.toString());
+    setSearchParams(params);
+  };
+
+  const renderFilterTags = useMemo(() => {
+    const tags: React.ReactNode[] = [];
+    const status = searchParams.get("status");
+    if (status && status !== "0") {
+      tags.push(
+        <Tag
+          key="status"
+          color="orange"
+          closable
+          onClose={() => {
+            const p = new URLSearchParams(searchParams);
+            p.delete("status");
+            setSearchParams(p);
+          }}
+        >
+          状态: {status === "1" ? "正常" : "禁用"}
+        </Tag>,
+      );
+    }
+
+    USER_SEARCH_DIMENSIONS.forEach((dim) => {
+      const val = searchParams.get(dim.value);
+      if (val) {
+        tags.push(
+          <Tag
+            key={dim.value}
+            color="blue"
+            closable
+            onClose={() => {
+              const p = new URLSearchParams(searchParams);
+              p.delete(dim.value);
+              setSearchParams(p);
+            }}
+          >
+            {dim.label}: {val}
+          </Tag>,
+        );
+      }
+    });
+    return tags;
+  }, [searchParams, setSearchParams]);
 
   return (
-    <div className="px-4">
-      <div className="flex p-2 justify-between">
-        <div className="flex gap-4">
-          <Select
-            value={userStatus}
-            onChange={(val) => setUserStatus(val)}
-            onSelect={(val) => setUserStatus(val)}
-            placeholder="用户状态"
+    <div className="p-4">
+      <div
+        className="mb-4 p-4"
+        style={{
+          backgroundColor: token.colorBgContainer,
+          borderRadius: token.borderRadiusLG,
+          border: `1px solid ${token.colorBorderSecondary}`,
+        }}
+      >
+        <div className="flex justify-between items-start">
+          {/* 使用 onFinish 处理搜索，避免手动操作状态引起的冲突 */}
+          <Form
+            form={searchForm}
+            onFinish={onHandleSearch}
+            layout="inline"
+            initialValues={{ status: 0, searchKey: "name" }}
           >
-            <Select.Option value={0}>全部状态</Select.Option>
-            <Select.Option value={1}>正常状态</Select.Option>
-            <Select.Option value={2}>禁用状态</Select.Option>
-          </Select>
-          <Search
-            placeholder="按姓名 邮箱 部门前缀搜索"
-            style={{ minWidth: "400px", maxWidth: "600px" }}
-            value={searchObject.value || ""}
-            onChange={(e) => {
-              setSearchObject((prev) => {
-                return {
-                  ...prev,
-                  value: e.target.value,
-                };
-              });
-            }}
-            onSearch={handleSearch}
-            onClear={handleClear}
-            allowClear
-            addonBefore={
-              <Select
-                value={searchObject.key}
-                onChange={(val) => {
-                  setSearchObject((prev) => {
-                    return {
-                      ...prev,
-                      key: val,
-                    };
-                  });
-                }}
-                style={{ width: 100 }}
-              >
-                <Select.Option value="name">名称</Select.Option>
-                <Select.Option value="email">邮箱</Select.Option>
-                <Select.Option value="department">部门</Select.Option>
-              </Select>
-            }
-          />
-          <Button type="primary" onClick={() => setCreateModalOpen(true)}>
+            <Space.Compact>
+              <Form.Item name="status" noStyle>
+                <Select style={{ width: 110 }}>
+                  <Select.Option value={0}>全部状态</Select.Option>
+                  <Select.Option value={1}>正常</Select.Option>
+                  <Select.Option value={2}>禁用</Select.Option>
+                </Select>
+              </Form.Item>
+              <Form.Item name="searchKey" noStyle>
+                <Select style={{ width: 90 }}>
+                  {USER_SEARCH_DIMENSIONS.map((d) => (
+                    <Select.Option key={d.value} value={d.value}>
+                      {d.label}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Form.Item name="searchValue" noStyle>
+                <Input
+                  placeholder="关键字搜索..."
+                  style={{ width: 220 }}
+                  allowClear
+                  onPressEnter={() => searchForm.submit()}
+                />
+              </Form.Item>
+              <Button
+                type="primary"
+                icon={<SearchOutlined />}
+                onClick={() => searchForm.submit()}
+              />
+              <Button onClick={handleReset}>重置</Button>
+              <Button
+                type="text"
+                icon={<SyncOutlined spin={userListReq.loading} />}
+                onClick={() => userListReq.refresh()}
+              />
+            </Space.Compact>
+          </Form>
+
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setCreateModalOpen(true)}
+          >
             创建用户
           </Button>
         </div>
 
-        <div className="pr-3">
-          <Button icon={<SyncOutlined />} onClick={() => refreshUserList()} />
-        </div>
+        {renderFilterTags.length > 0 && (
+          <div
+            className="mt-3 pt-3 border-t border-dashed"
+            style={{ borderColor: token.colorBorderSecondary }}
+          >
+            <Space wrap>{renderFilterTags}</Space>
+          </div>
+        )}
       </div>
 
       <DynamicTable<UserListResponseItem>
-        extraHeight={80}
-        loading={loading}
+        loading={userListReq.loading}
         columns={GetUserColumn({
           message,
-          updateUserLoad,
-          updateUserRun,
-          delUserLoad,
-          delUserRun,
-          editUserOpen,
+          updateUserLoad: updateUserReq.loading,
+          updateUserRun: updateUserReq.run,
+          delUserLoad: delUserReq.loading,
+          delUserRun: delUserReq.run,
+          editUserOpen: (id) => {
+            setEditId(id);
+            setIsEditOpen(true);
+          },
           modal,
           setRestUserPWDState,
         })}
-        dataSource={data?.list || []}
-        locale={{
-          emptyText: "暂无数据",
-          triggerAsc: "点击升序",
-          triggerDesc: "点击降序",
-          cancelSort: "取消排序",
-        }}
+        dataSource={userListReq.data?.list || []}
         pagination={{
-          pageSizeOptions: ["10", "20", "50", "100"],
-          showTotal: (total, range) =>
-            `${range[0]}-${range[1]} 条，共 ${total} 条数据`,
-          current: Number(page) || 1,
-          pageSize: Number(pageSize) || 10,
-          total: data?.total || 0,
-          showSizeChanger: true,
+          current: Number(searchParams.get("page")) || 1,
+          pageSize: Number(searchParams.get("pageSize")) || 10,
+          total: userListReq.data?.total || 0,
           onChange: handlePageChange,
-          locale: {
-            items_per_page: "条/页",
-            jump_to: "跳至",
-            page: "页",
-          },
+          showTotal: (t) => `共 ${t} 条数据`,
         }}
         bordered
       />
 
+      {/* 弹窗部分保持不变 */}
       <CreateUserModal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        refresh={refreshUserList}
+        refresh={userListReq.refresh}
       />
       <EditUserComponent
-        callback={refreshUserList}
+        callback={userListReq.refresh}
         open={isEditOpen}
-        onCancel={cancelEditUser}
+        onCancel={() => {
+          setIsEditOpen(false);
+          setEditId("");
+        }}
         id={editId}
         modal={modal}
         message={message}
       />
       <Modal
-        title={`重置 ${restUserPWDState.name} 的密码`}
+        title={`重置密码: ${restUserPWDState.name}`}
         open={restUserPWDState.open}
-        styles={{
-          body: {
-            padding: "20px 10px 20px 10px",
-          },
-        }}
-        closable={false}
-        okText="重置"
-        cancelText="取消"
+        confirmLoading={updateUserReq.loading}
         onCancel={() =>
-          setRestUserPWDState({ open: false, id: "", password: "", name: "" })
+          setRestUserPWDState((prev) => ({ ...prev, open: false }))
         }
         onOk={() => {
-          updateUserRun({
+          if (!restUserPWDState.password)
+            return message.warning("请输入新密码");
+          updateUserReq.run({
             id: restUserPWDState.id,
             password: restUserPWDState.password,
           });
-          setRestUserPWDState({ open: false, id: "", password: "", name: "" });
         }}
       >
-        <Input.Password
-          value={restUserPWDState.password}
-          size="large"
-          onChange={(e) =>
-            setRestUserPWDState((prev) => ({
-              ...prev,
-              password: e.target.value,
-            }))
-          }
-        />
+        <div className="py-4">
+          <Typography.Text type="secondary" className="mb-2 block">
+            请输入该用户的新登录密码：
+          </Typography.Text>
+          <Input.Password
+            placeholder="新密码"
+            value={restUserPWDState.password}
+            onChange={(e) =>
+              setRestUserPWDState((p) => ({ ...p, password: e.target.value }))
+            }
+            autoFocus
+          />
+        </div>
       </Modal>
     </div>
   );
