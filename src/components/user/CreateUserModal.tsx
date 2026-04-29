@@ -106,7 +106,7 @@ const CreateUserModal = ({ open, onClose, refresh }: CreateUserModalProps) => {
                   },
                 ]}
               >
-                <Input.Password />
+                <Input.Password autoComplete="new-password" />
               </Form.Item>
             </Col>
             <Col span={12}>

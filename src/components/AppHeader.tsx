@@ -125,7 +125,7 @@ export default function AppHeader({
                 {userData?.roles?.map((role) => (
                   <Tag
                     key={role.name}
-                    bordered={false}
+                    variant="filled"
                     style={{
                       background: roleBg,
                       color: roleColor,
@@ -227,7 +227,7 @@ export default function AppHeader({
                     </span>
                     {data.count > 0 && (
                       <Tag
-                        bordered={false}
+                        variant="filled"
                         color={isGlobal ? "processing" : "error"}
                         style={{
                           marginInlineEnd: 0,

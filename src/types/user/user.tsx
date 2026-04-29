@@ -1,12 +1,25 @@
-import { Button, Switch, TableColumnsType, Tooltip, Typography } from "antd";
+import {
+  Button,
+  Divider,
+  Space,
+  Switch,
+  TableColumnsType,
+  Tag,
+  Tooltip,
+  Typography,
+} from "antd";
 import React from "react";
 import { UserListResponseItem, UserUpdateRequest } from "@/types/user/user";
 import { HookAPI } from "antd/es/modal/useModal";
-import { CopyOutlined } from "@ant-design/icons";
-import { MessageInstance } from "antd/es/message/interface";
+import {
+  DeleteOutlined,
+  EditOutlined,
+  KeyOutlined,
+  MailOutlined,
+  MobileOutlined,
+} from "@ant-design/icons";
 
 interface GetUserColumnProps {
-  message: MessageInstance;
   updateUserLoad: boolean;
   updateUserRun: (data: UserUpdateRequest) => void;
   delUserLoad: boolean;
@@ -23,9 +36,12 @@ interface GetUserColumnProps {
   >;
 }
 
-export function GetUserColumn(props: GetUserColumnProps) {
+const { Text } = Typography;
+
+export function GetUserColumn(
+  props: GetUserColumnProps,
+): TableColumnsType<UserListResponseItem> {
   const {
-    message,
     updateUserLoad,
     updateUserRun,
     delUserLoad,
@@ -34,166 +50,160 @@ export function GetUserColumn(props: GetUserColumnProps) {
     modal,
     setRestUserPWDState,
   } = props;
+
   return [
     {
       title: "ID",
       dataIndex: "id",
-      sorter: (a: UserListResponseItem, b: UserListResponseItem) =>
-        Number(a.id) - Number(b.id),
+      width: 60,
+      responsive: ["md"], // 中等屏幕(768px)及以上显示
+      render: (id: string) => (
+        <Text type="secondary" style={{ fontSize: "12px" }}>
+          {id}
+        </Text>
+      ),
     },
     {
-      title: "名称",
+      title: "用户信息",
       dataIndex: "name",
-      ellipsis: true,
-      sorter: (a: UserListResponseItem, b: UserListResponseItem) =>
-        a.name.localeCompare(b.name),
-      render: (name: string) => {
+      key: "userInfo",
+      render: (_: string, record: UserListResponseItem) => (
+        <div
+          style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}
+        >
+          <Text strong>{record.name}</Text>
+          <Text type="secondary" style={{ fontSize: "12px", marginTop: 2 }}>
+            {record.nickName || "—"}
+          </Text>
+        </div>
+      ),
+    },
+    {
+      title: "部门",
+      dataIndex: "department",
+      width: 100,
+      responsive: ["lg"], // 大屏幕(992px)及以上显示
+      render: (dept: string) => (
+        <Tag color="blue" style={{ border: "none" }}>
+          {dept || "通用"}
+        </Tag>
+      ),
+    },
+    {
+      title: "联系方式",
+      dataIndex: "email",
+      width: 220,
+      responsive: ["sm"], // 平板及以上显示
+      render: (email: string, record: UserListResponseItem) => (
+        <Space orientation="vertical" size={0} style={{ gap: "2px" }}>
+          {email ? (
+            <Text
+              copyable={{ text: email, tooltips: ["点击复制", "复制成功"] }}
+              style={{ fontSize: "13px" }}
+            >
+              <MailOutlined style={{ marginRight: 4, opacity: 0.6 }} />
+              {email}
+            </Text>
+          ) : (
+            <Text type="secondary">—</Text>
+          )}
+          {record.mobile && (
+            <Text type="secondary" style={{ fontSize: "12px" }}>
+              <MobileOutlined style={{ marginRight: 4, opacity: 0.6 }} />
+              {record.mobile}
+            </Text>
+          )}
+        </Space>
+      ),
+    },
+    {
+      title: "状态",
+      dataIndex: "status",
+      width: "100px",
+      align: "center",
+      render: (status: number, record: UserListResponseItem) => {
+        const isAdmin = record.id === "1" || record.name === "admin";
         return (
-          <Tooltip title={name} placement="topLeft">
-            <span>{name}</span>
+          <Tooltip title={isAdmin ? "系统核心账号不可禁用" : ""}>
+            <div onClick={(e) => e.stopPropagation()}>
+              <Switch
+                checked={status === 1}
+                checkedChildren="开"
+                unCheckedChildren="关"
+                size="small"
+                loading={updateUserLoad}
+                disabled={isAdmin}
+                onChange={(checked) => {
+                  updateUserRun({ id: record.id, status: checked ? 1 : 2 });
+                }}
+              />
+            </div>
           </Tooltip>
         );
       },
     },
     {
-      title: "昵称",
-      dataIndex: "nickName",
-      sorter: (a: UserListResponseItem, b: UserListResponseItem) =>
-        a.nickName.localeCompare(b.nickName),
-    },
-    { title: "部门", dataIndex: "department" },
-    {
-      title: "邮箱",
-      dataIndex: "email",
-      sorter: (a: UserListResponseItem, b: UserListResponseItem) =>
-        a.email.localeCompare(b.email),
-      render: (email: string) => {
-        if (!email) return "";
-        return (
-          <Typography.Text
-            copyable={{
-              icon: [
-                <CopyOutlined
-                  key="copy-icon"
-                  style={{
-                    fontSize: "11px",
-                    height: "14px",
-                    lineHeight: "14px",
-                    verticalAlign: "middle",
-                  }}
-                />,
-                <CopyOutlined
-                  style={{
-                    fontSize: "11px",
-                    height: "14px",
-                    lineHeight: "14px",
-                    verticalAlign: "middle",
-                  }}
-                  key="copied-icon"
-                />,
-              ],
-
-              text: email,
-              tooltips: ["点击复制邮箱", "复制成功"],
-            }}
-          >
-            {email}
-          </Typography.Text>
-        );
-      },
-    },
-    {
-      title: "手机号",
-      dataIndex: "mobile",
-      width: "12%",
-    },
-    {
-      title: "状态",
-      dataIndex: "status",
-      width: "8%",
-      render: (status: number, record: UserListResponseItem) => {
-        return (
-          <Switch
-            checked={status === 1}
-            checkedChildren="正常"
-            unCheckedChildren="禁用"
-            loading={updateUserLoad}
-            onChange={(checked) => {
-              if (Number(record.id) === 1) {
-                message.error("操作失败");
-                return;
-              }
-              const newStatus = checked ? 1 : 2;
-              updateUserRun({
-                id: record.id,
-                status: newStatus,
-              });
-            }}
-          />
-        );
-      },
-    },
-    {
       title: "操作",
-      dataIndex: "action",
-      width: "10%",
+      key: "action",
+      fixed: "right",
+      align: "center",
       render: (_: string, record: UserListResponseItem) => {
+        const isAdmin = record.id === "1" || record.name === "admin";
         return (
-          <div className="flex justify-center gap-3">
+          <Space separator={<Divider orientation="vertical" />} size={0}>
             <Button
-              style={{ padding: "0" }}
               type="link"
-              onClick={() => {
-                editUserOpen(record.id);
-              }}
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => editUserOpen(record.id)}
             >
               修改
             </Button>
+
             <Button
-              style={{ padding: "0" }}
               type="link"
-              onClick={() => {
+              size="small"
+              icon={<KeyOutlined />}
+              disabled={record.status === 2}
+              onClick={() =>
                 setRestUserPWDState({
                   open: true,
                   id: record.id,
                   password: "",
                   name: record.name,
-                });
-              }}
-              disabled={record.status === 2}
+                })
+              }
             >
               重置
             </Button>
+
             <Button
-              style={{ padding: "0" }}
               type="link"
+              size="small"
               danger
+              icon={<DeleteOutlined />}
+              disabled={isAdmin}
               loading={delUserLoad}
               onClick={() => {
                 modal.confirm({
-                  title: "删除用户",
-                  content: "确定删除该用户吗？",
+                  title: "确认删除",
+                  icon: <DeleteOutlined style={{ color: "#ff4d4f" }} />,
+                  content: `确定要删除用户 "${record.name}" 吗？`,
                   okText: "确定",
+                  okType: "danger",
                   cancelText: "取消",
-                  onOk: () => {
-                    if (record.name === "admin" || record.id === "1") {
-                      message.error("删除失败");
-                      return;
-                    }
-                    delUserRun(record.id);
-                  },
+                  onOk: () => delUserRun(record.id),
                 });
               }}
             >
               删除
             </Button>
-          </div>
+          </Space>
         );
       },
     },
   ];
 }
-
 interface DataType {
   id: string;
   name: string;
