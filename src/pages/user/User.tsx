@@ -12,7 +12,7 @@ import {
   theme,
   Typography,
 } from "antd";
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 // 业务组件与类型
@@ -23,8 +23,12 @@ import { UserDelete, UserList, UserUpdateByAdmin } from "@/services/user";
 import { GetUserColumn } from "@/types/user/user.tsx";
 import { userListRequest, UserListResponseItem } from "@/types/user/user";
 import { PageOptionEnum } from "@/types/enum";
-
-const { Text } = Typography;
+// 1. 定义表单值的接口
+interface SearchFormValues {
+  status: number;
+  searchKey: string;
+  searchValue: string;
+}
 
 const USER_SEARCH_DIMENSIONS = [
   { label: "名称", value: "name" },
@@ -68,12 +72,11 @@ const UserPage = () => {
     },
   });
 
-  // 1. 核心数据同步逻辑
+  // 1. 核心逻辑：只负责请求数据，不再回填 Form 里的 searchValue
   useEffect(() => {
     const page = searchParams.get("page");
     const pageSize = searchParams.get("pageSize");
 
-    // 补全默认分页参数
     if (!page || !pageSize) {
       const newParams = new URLSearchParams(searchParams);
       if (!page) newParams.set("page", PageOptionEnum.DEFAULTPAGE.toString());
@@ -95,42 +98,33 @@ const UserPage = () => {
 
     userListReq.run(params);
 
-    // 只有当 Form 没被触摸（没有脏数据）时，或者 URL 变化时才同步 Form
-    // 这样可以避免在输入时被 URL 强制覆盖
-    const activeDim = USER_SEARCH_DIMENSIONS.find((d) =>
-      searchParams.has(d.value),
-    );
-    const activeKey = activeDim?.value || "name";
+    // 注意：这里删除了 searchForm.setFieldsValue 逻辑
+    // 这样 Form 就不会在 URL 变化时被强制回填
+  }, [searchParams]);
 
-    searchForm.setFieldsValue({
-      status: params.status,
-      searchKey: activeKey,
-      searchValue: searchParams.get(activeKey) || "",
-    });
-  }, [searchParams, searchForm]);
+  // 2. 搜索提交：更新 URL 后立即清空 Form
+  const onHandleSearch = (values: SearchFormValues) => {
+    const { status, searchKey, searchValue } = values;
+    if (!searchValue) {
+      return;
+    }
+    const newParams = new URLSearchParams(searchParams);
 
-  // 2. 优化后的搜索处理
-  const onHandleSearch = useCallback(
-    (values: any) => {
-      const { status, searchKey, searchValue } = values;
-      const newParams = new URLSearchParams(searchParams); // 继承当前所有参数（含 pageSize）
+    newParams.set("page", "1");
+    newParams.set("status", status?.toString() || "0");
 
-      newParams.set("page", "1"); // 搜索永远重置到第一页
-      newParams.set("status", status?.toString() || "0");
+    // 清除旧维度
+    USER_SEARCH_DIMENSIONS.forEach((d) => newParams.delete(d.value));
 
-      // 清除所有旧的搜索维度，避免 name=1&email=2 的冲突
-      USER_SEARCH_DIMENSIONS.forEach((d) => newParams.delete(d.value));
+    if (searchValue) {
+      newParams.set(searchKey, searchValue);
+    }
 
-      if (searchValue) {
-        newParams.set(searchKey, searchValue);
-      }
+    setSearchParams(newParams);
 
-      setSearchParams(newParams);
-      // 这里不需要 resetFields，因为上面的 useEffect 会负责同步。
-      // 如果你点击搜索后想让输入框变空，逻辑上是不合理的，因为用户需要看到当前的过滤条件。
-    },
-    [searchParams, setSearchParams],
-  );
+    // ✨ 关键优化：只清空输入框内容，保留搜索维度和状态的配置
+    searchForm.setFieldsValue({ searchValue: "" });
+  };
 
   // 3. 重置逻辑
   const handleReset = () => {
@@ -142,6 +136,7 @@ const UserPage = () => {
     });
   };
 
+  // 4. 分页处理
   const handlePageChange = (p: number, s: number) => {
     const params = new URLSearchParams(searchParams);
     params.set("page", p.toString());
@@ -149,6 +144,7 @@ const UserPage = () => {
     setSearchParams(params);
   };
 
+  // 5. 筛选标签（这是唯一展示当前搜索条件的地方）
   const renderFilterTags = useMemo(() => {
     const tags: React.ReactNode[] = [];
     const status = searchParams.get("status");
@@ -189,7 +185,7 @@ const UserPage = () => {
       }
     });
     return tags;
-  }, [searchParams, setSearchParams]);
+  }, [searchParams]);
 
   return (
     <div className="p-4">
@@ -199,10 +195,10 @@ const UserPage = () => {
           backgroundColor: token.colorBgContainer,
           borderRadius: token.borderRadiusLG,
           border: `1px solid ${token.colorBorderSecondary}`,
+          boxShadow: "0 2px 4px rgba(0,0,0,0.02)", // 加入微阴影，对齐 RolePage
         }}
       >
         <div className="flex justify-between items-start">
-          {/* 使用 onFinish 处理搜索，避免手动操作状态引起的冲突 */}
           <Form
             form={searchForm}
             onFinish={onHandleSearch}
@@ -232,13 +228,12 @@ const UserPage = () => {
                   style={{ width: 220 }}
                   allowClear
                   onPressEnter={() => searchForm.submit()}
+                  prefix={<SearchOutlined />}
                 />
               </Form.Item>
-              <Button
-                type="primary"
-                icon={<SearchOutlined />}
-                onClick={() => searchForm.submit()}
-              />
+              <Button type="primary" onClick={() => searchForm.submit()}>
+                搜索
+              </Button>
               <Button onClick={handleReset}>重置</Button>
               <Button
                 type="text"
@@ -270,7 +265,6 @@ const UserPage = () => {
       <DynamicTable<UserListResponseItem>
         loading={userListReq.loading}
         columns={GetUserColumn({
-          message,
           updateUserLoad: updateUserReq.loading,
           updateUserRun: updateUserReq.run,
           delUserLoad: delUserReq.loading,
@@ -288,12 +282,12 @@ const UserPage = () => {
           pageSize: Number(searchParams.get("pageSize")) || 10,
           total: userListReq.data?.total || 0,
           onChange: handlePageChange,
+          showSizeChanger: true,
           showTotal: (t) => `共 ${t} 条数据`,
         }}
         bordered
       />
 
-      {/* 弹窗部分保持不变 */}
       <CreateUserModal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
@@ -310,6 +304,7 @@ const UserPage = () => {
         modal={modal}
         message={message}
       />
+
       <Modal
         title={`重置密码: ${restUserPWDState.name}`}
         open={restUserPWDState.open}
@@ -317,6 +312,7 @@ const UserPage = () => {
         onCancel={() =>
           setRestUserPWDState((prev) => ({ ...prev, open: false }))
         }
+        destroyOnHidden
         onOk={() => {
           if (!restUserPWDState.password)
             return message.warning("请输入新密码");
@@ -331,12 +327,13 @@ const UserPage = () => {
             请输入该用户的新登录密码：
           </Typography.Text>
           <Input.Password
+            autoFocus
+            autoComplete="new-password"
             placeholder="新密码"
             value={restUserPWDState.password}
             onChange={(e) =>
               setRestUserPWDState((p) => ({ ...p, password: e.target.value }))
             }
-            autoFocus
           />
         </div>
       </Modal>

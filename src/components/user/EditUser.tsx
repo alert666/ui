@@ -10,6 +10,7 @@ import {
   Input,
   Popconfirm,
   Row,
+  Space,
   Tag,
 } from "antd";
 import { MessageInstance } from "antd/es/message/interface";
@@ -183,32 +184,70 @@ export default function EditUserComponent(props: EditUserProps) {
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item
-                  name="avatar"
-                  label="头像"
-                  rules={[{ required: true }]}
-                >
-                  <Input
-                    addonAfter={
-                      <EyeOutlined
-                        style={{
-                          cursor: "pointer",
-                          color: "blue",
-                          backgroundColor: "#fff",
-                        }}
-                        title="预览头像"
-                        onClick={() => {
-                          modal.info({
-                            title: "头像预览",
-                            content: (
-                              <Image src={form.getFieldValue("avatar")} />
-                            ),
-                            okText: "关闭",
-                          });
-                        }}
-                      />
-                    }
-                  />
+                <Form.Item label="头像" required>
+                  <Space.Compact style={{ width: "100%" }}>
+                    <Form.Item
+                      name="avatar"
+                      noStyle
+                      rules={[{ required: true, message: "请输入头像地址" }]}
+                    >
+                      <Input placeholder="输入头像 URL" allowClear />
+                    </Form.Item>
+                    <Button
+                      icon={<EyeOutlined />}
+                      onClick={() => {
+                        const avatarUrl = form.getFieldValue("avatar");
+                        modal.info({
+                          icon: null, // 💡 关键：移除左侧默认的 Info 图标，否则内容会偏右
+                          centered: true,
+                          okText: "关闭",
+                          maskClosable: true,
+                          content: (
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column", // 垂直排列
+                                alignItems: "center", // 水平居中
+                                justifyContent: "center",
+                                padding: "20px 0 10px 0",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontSize: "16px",
+                                  fontWeight: 600,
+                                  marginBottom: "20px",
+                                }}
+                              >
+                                头像预览
+                              </div>
+                              <Image
+                                width={200}
+                                height={200}
+                                src={avatarUrl}
+                                fallback="https://api.dicebear.com/7.x/avataaars/svg?seed=placeholder"
+                                style={{
+                                  borderRadius: "50%",
+                                  objectFit: "cover",
+                                  border: "4px solid #f0f2f5",
+                                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                                }}
+                                preview={false}
+                              />
+                              {!avatarUrl && (
+                                <div
+                                  style={{ marginTop: 10, color: "#ff4d4f" }}
+                                >
+                                  暂无图片地址
+                                </div>
+                              )}
+                            </div>
+                          ),
+                        });
+                      }}
+                      title="预览"
+                    />
+                  </Space.Compact>
                 </Form.Item>
               </Col>
             </Row>

@@ -8,3 +8,20 @@ body,
   padding: 0;
   overflow: hidden;
 }
+
+/* 填充密码的时候覆盖浏览器自动填充样式 */
+.ant-input:-webkit-autofill,
+.ant-input:-internal-autofill-previewed,
+.ant-input:-internal-autofill-selected {
+  /* 文字颜色、大小还原 */
+  -webkit-text-fill-color: rgba(0, 0, 0, 0.85) !important;
+  font-size: 14px !important;
+
+  /* 背景透明 + 用阴影“盖住”浏览器底色 */
+  background-color: transparent !important;
+  -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
+  box-shadow: 0 0 0 1000px #fff inset !important;
+
+  /* 延迟背景过渡，防止闪蓝 */
+  transition: background-color 5000s ease-in-out 0s !important;
+}

@@ -64,7 +64,7 @@ const LoginPage = () => {
             <Input
               prefix={<UserOutlined />}
               placeholder="请输入用户名"
-              className="focus:ring-indigo-500 focus:border-indigo-500"
+              className="focus:ring-indigo-500 focus:border-indigo-500 custom-autofill-input"
               style={{ borderRadius: "8px" }}
             />
           </Form.Item>

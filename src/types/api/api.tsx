@@ -51,9 +51,18 @@ export const ApiColumns = () => {
       title: "描述",
       ellipsis: true,
       render: (text: string) => (
-        <Tooltip placement="topLeft" title={text}>
-          <span>{text}</span>
-        </Tooltip>
+        <Typography.Text
+          style={{ maxWidth: "100%" }}
+          ellipsis={{
+            tooltip: {
+              title: text,
+              placement: "topLeft",
+              overlayStyle: { maxWidth: 300 },
+            },
+          }}
+        >
+          {text}
+        </Typography.Text>
       ),
     },
   ];
