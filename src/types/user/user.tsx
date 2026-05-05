@@ -174,7 +174,7 @@ export function GetUserColumn(
                 })
               }
             >
-              重置
+              重置密码
             </Button>
 
             <Button

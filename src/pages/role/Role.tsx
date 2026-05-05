@@ -14,7 +14,6 @@ import { PageOptionEnum } from "@/types/enum";
 // 定义搜索维度
 const ROLE_SEARCH_DIMENSIONS = [
   { label: "角色名称", value: "name", type: "input" },
-  // 如果未来有其他搜索维度（如 code），可以在此直接添加
 ];
 
 const RolePage = () => {
@@ -186,6 +185,7 @@ const RolePage = () => {
 
       {/* 数据表格 */}
       <DynamicTable
+        size="large"
         loading={listRoleRes.loading}
         dataSource={listRoleRes.data?.list || []}
         columns={GetRolecolumns({

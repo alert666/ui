@@ -12,6 +12,7 @@ import Test from "./test/Test";
 import OAuthPage from "./pages/login/OAuth";
 import AlertHistoryPage from "./pages/alert/History";
 import AlertChannel from "./pages/channel/Channel";
+import Tenant from "./pages/tenant/Tenant";
 export type MenuItem = Required<MenuProps>["items"][number];
 
 const router = createBrowserRouter([
@@ -23,6 +24,10 @@ const router = createBrowserRouter([
         path: "/workspace",
         Component: LayoutPage,
         children: [
+          {
+            path: "tenant",
+            Component: Tenant,
+          },
           {
             path: "ram",
             children: [
@@ -76,6 +81,10 @@ const router = createBrowserRouter([
 ]);
 
 const commonMenuItem: MenuItem[] = [
+  {
+    key: "tenant",
+    label: "租户",
+  },
   {
     key: "ram",
     label: "用户",

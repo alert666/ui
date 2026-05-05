@@ -264,6 +264,7 @@ const UserPage = () => {
 
       <DynamicTable<UserListResponseItem>
         loading={userListReq.loading}
+        size="large"
         columns={GetUserColumn({
           updateUserLoad: updateUserReq.loading,
           updateUserRun: updateUserReq.run,
