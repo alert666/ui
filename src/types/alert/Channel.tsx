@@ -24,7 +24,6 @@ export function GetAlertChannelColumns(
     {
       title: "创建时间",
       dataIndex: "createdAt",
-      width: 180,
       sorter: (a, b) => a.createdAt.localeCompare(b.createdAt),
       render: (time: string) => (
         <span style={{ color: token.colorTextDescription, fontSize: "12px" }}>
@@ -36,7 +35,6 @@ export function GetAlertChannelColumns(
       title: "通道名称",
       dataIndex: "name",
       fixed: "left",
-      width: 160,
       render: (name: string) => (
         <Typography.Text copyable strong>
           {name}
@@ -46,7 +44,6 @@ export function GetAlertChannelColumns(
     {
       title: "类型",
       dataIndex: "type",
-      width: 120,
       render: (type: string) => {
         const colorMap: Record<string, string> = {
           [ChannelType.FEI_SHU_APP]: "blue",
@@ -61,7 +58,6 @@ export function GetAlertChannelColumns(
     {
       title: "聚合状态",
       dataIndex: "aggregationStatus",
-      width: 100,
       render: (status: number) => (
         <Badge
           status={status === 1 ? "processing" : "default"}
@@ -72,7 +68,6 @@ export function GetAlertChannelColumns(
     {
       title: "状态",
       dataIndex: "status",
-      width: 100,
       render: (status: number) => (
         <Badge
           status={status === 1 ? "success" : "error"}
