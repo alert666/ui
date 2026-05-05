@@ -218,6 +218,7 @@ const PolicyPage = () => {
 
       {/* 数据表格 */}
       <DynamicTable
+        size="large"
         loading={apiListRes.loading}
         dataSource={apiListRes.data?.list || []}
         columns={ApiListColumns({
