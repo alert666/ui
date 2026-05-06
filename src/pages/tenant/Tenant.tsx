@@ -22,7 +22,7 @@ import {
   theme,
   Typography,
 } from "antd";
-import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
+import { ApartmentOutlined, SearchOutlined } from "@ant-design/icons";
 import { SearchDimension } from "@/types/index";
 import CreateTenantComponent from "@/components/tenant/CreatTenantModal";
 
@@ -133,6 +133,7 @@ function Tenant() {
   useEffect(() => {
     const page = searchParams.get("page");
     const pageSize = searchParams.get("pageSize");
+    const name = searchParams.get("name");
     if (!page || !pageSize) {
       const newParams = new URLSearchParams(searchParams);
       if (!page) newParams.set("page", PageOptionEnum.DEFAULTPAGE.toString());
@@ -148,6 +149,7 @@ function Tenant() {
     const params: TenantListRequest = {
       page: page ? Number(page) : PageOptionEnum.DEFAULTPAGE,
       pageSize: pageSize ? Number(pageSize) : PageOptionEnum.DEFAULTPAGESIZE,
+      name: name ? name : undefined,
     };
     tenantListResult.run(params);
   }, [searchParams]);
@@ -175,47 +177,62 @@ function Tenant() {
           style={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "flex-start",
+            alignItems: "center", // 改为 center 对齐更美观
+            marginBottom: 16,
+            gap: 16,
           }}
         >
+          {/* 左侧搜索区：所有搜索相关的放在 Form 内部 */}
           <Form
             form={searchForm}
-            onFinish={onHandleSearch}
+            onFinish={onHandleSearch} // 只有这样回车才会触发搜索逻辑
             initialValues={{ searchKey: activeDim }}
+            style={{ display: "flex", flex: 1 }}
           >
-            <Space.Compact style={{ boxShadow: "0 2px 0 rgba(0,0,0,0.015)" }}>
-              <Form.Item name="searchKey" noStyle>
-                <Select
-                  style={{ width: 110, textAlign: "center" }}
-                  onChange={(val) => {
-                    setActiveDim(val);
-                    searchForm.setFieldValue("searchValue", undefined);
-                  }}
-                  options={TEHANT_SEARCH_DIMENSIONS.map((dim) => ({
-                    label: dim.label,
-                    value: dim.value,
-                  }))}
-                />
-              </Form.Item>
+            <Space size={8}>
+              <Space.Compact style={{ boxShadow: "0 2px 0 rgba(0,0,0,0.015)" }}>
+                <Form.Item name="searchKey" noStyle>
+                  <Select
+                    style={{ width: 110 }}
+                    onChange={(val) => {
+                      setActiveDim(val);
+                      // 注意：这里手动清除值，确保维度切换时数据干净
+                      searchForm.setFieldValue("searchValue", undefined);
+                    }}
+                    options={TEHANT_SEARCH_DIMENSIONS.map((dim) => ({
+                      label: dim.label,
+                      value: dim.value,
+                    }))}
+                  />
+                </Form.Item>
 
-              {/* 🌟 必须设置 name="searchValue" */}
-              <Form.Item name="searchValue" noStyle>
-                {getSearchValue(TEHANT_SEARCH_DIMENSIONS)}
-              </Form.Item>
+                <Form.Item name="searchValue" noStyle>
+                  {/* 确保 getSearchValue 返回的是 antd 的 Input */}
+                  {getSearchValue(TEHANT_SEARCH_DIMENSIONS)}
+                </Form.Item>
+              </Space.Compact>
+
               <Button
                 type="primary"
-                icon={<PlusOutlined />}
                 onClick={() => {
-                  setCreateTenantOpen(true);
+                  searchForm.submit();
                 }}
+                icon={<SearchOutlined />}
               >
-                新建租户
+                查询
               </Button>
-              <Button type="primary" onClick={handleReset}>
-                重置搜索
-              </Button>
-            </Space.Compact>
+
+              <Button onClick={handleReset}>重置</Button>
+            </Space>
           </Form>
+
+          <Button
+            type="primary"
+            icon={<ApartmentOutlined />}
+            onClick={() => setCreateTenantOpen(true)}
+          >
+            新建租户
+          </Button>
         </div>
         {/* 已选条件区域优化 */}
         {renderFilterTags.length > 0 && (

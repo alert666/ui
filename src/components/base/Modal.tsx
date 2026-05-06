@@ -31,7 +31,7 @@ const ModalComponent = ({
         },
         ...styles,
       }}
-      mask={false}
+      mask={{ closable: false }}
       okText="确认"
       cancelText="取消"
       title={title}

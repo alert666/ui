@@ -91,6 +91,7 @@ function CreateTenantComponent(props: CreateTenantComponentProps) {
 
   const handleModalCancel = () => {
     form.resetFields();
+    setInitialData(null);
     setCreateTenantOpen(false);
   };
 
@@ -100,7 +101,8 @@ function CreateTenantComponent(props: CreateTenantComponentProps) {
       open={createTenantOpen}
       handleCancel={handleModalCancel}
       handleOk={handleModalOk}
-      // 这里的 loading 状态需要合并两个请求
+      closable={false}
+      keyboard={false}
       confirmLoading={createReq.loading || updateReq.loading}
     >
       <Form<TenantCreateReq> form={form} layout="vertical">

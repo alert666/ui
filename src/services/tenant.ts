@@ -14,7 +14,7 @@ export function GetTenantOptions(): Promise<
 }
 
 export function TenantList(params: TenantListRequest): Promise<TenantListRes> {
-  return get<TenantListRes>("/api/v1/tenant", { params });
+  return get<TenantListRes>("/api/v1/tenant", params);
 }
 
 export function TenantCreate(data: TenantCreateReq): Promise<ApiResponse> {
