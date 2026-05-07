@@ -21,7 +21,7 @@ import { App, Button, Form, Input, Select, Space, Tag, theme } from "antd";
 import { PlusOutlined, SearchOutlined, SyncOutlined } from "@ant-design/icons";
 import EditAlertChannel from "@/components/alertChannel/Channel";
 
-function AlertChannel() {
+function AlertChannelPage() {
   const { message, modal } = App.useApp();
   const { token } = theme.useToken();
   const [searchForm] = Form.useForm();
@@ -312,4 +312,4 @@ function AlertChannel() {
   );
 }
 
-export default AlertChannel;
+export default AlertChannelPage;

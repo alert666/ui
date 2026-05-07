@@ -11,8 +11,9 @@ import { Role } from "./types/user/user";
 import Test from "./test/Test";
 import OAuthPage from "./pages/login/OAuth";
 import AlertHistoryPage from "./pages/alert/History";
-import AlertChannel from "./pages/channel/Channel";
+import AlertChannelPage from "./pages/channel/Channel";
 import Tenant from "./pages/tenant/Tenant";
+import AlertTemplatePage from "./pages/alert/Template";
 export type MenuItem = Required<MenuProps>["items"][number];
 
 const router = createBrowserRouter([
@@ -54,7 +55,11 @@ const router = createBrowserRouter([
               },
               {
                 path: "channel",
-                Component: AlertChannel,
+                Component: AlertChannelPage,
+              },
+              {
+                path: "template",
+                Component: AlertTemplatePage,
               },
             ],
           },
@@ -100,6 +105,7 @@ const commonMenuItem: MenuItem[] = [
     children: [
       { key: "history", label: "告警历史" },
       { key: "channel", label: "告警通道" },
+      { key: "template", label: "告警模版" },
     ],
   },
 ];

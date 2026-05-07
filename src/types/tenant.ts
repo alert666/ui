@@ -25,7 +25,7 @@ export interface TenantRecord {
   createdAt: string;
   updatedAt: string;
 }
-// export interface TenantListRequest extends ListReq {}
+
 export interface TenantListRequest extends ListReq {
   name?: string;
 }
