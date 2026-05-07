@@ -76,6 +76,13 @@ export function GetAlertChannelColumns(
       ),
     },
     {
+      title: "模板ID",
+      dataIndex: "alertTemplateID",
+      ellipsis: true,
+      // TODO 跳转到 alertTemplate 页面
+      render: (id: string) => <Button type="link">{id}</Button>,
+    },
+    {
       title: "描述",
       dataIndex: "description",
       ellipsis: true,

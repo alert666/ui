@@ -12,7 +12,10 @@ import { AlertHistoryItem, AlertHistoryUpdateRequest } from "./history";
 import type { ColumnsType } from "antd/es/table";
 import { TagsOutlined, ClockCircleOutlined } from "@ant-design/icons";
 import Big from "big.js";
-
+import dayjs from "dayjs";
+{
+  // dayjs(record.createdAt).format("YYYY-MM-DD HH:mm:ss");
+}
 interface AlertHistoryColumnsProps {
   token: GlobalToken;
   updateRun: (id: string, data: AlertHistoryUpdateRequest) => void;
@@ -70,7 +73,7 @@ export function GetAlertHistorycolumns(
       dataIndex: "startsAt",
       width: 180,
       sorter: (a, b) => a.startsAt.localeCompare(b.startsAt),
-      render: (startsAt: string, record) => {
+      render: (_: string, record) => {
         if (record.endsAt) {
           return (
             <Tooltip
@@ -82,7 +85,7 @@ export function GetAlertHistorycolumns(
               title={
                 <div style={{ whiteSpace: "nowrap" }}>
                   <ClockCircleOutlined style={{ marginRight: 4 }} />
-                  恢复时间: {record.endsAt}
+                  恢复时间: {dayjs(record.endsAt).format("YYYY-MM-DD HH:mm:ss")}
                 </div>
               }
             >
@@ -95,12 +98,12 @@ export function GetAlertHistorycolumns(
                   color: token.colorInfoText,
                 }}
               >
-                {startsAt}
+                {dayjs(record.startsAt).format("YYYY-MM-DD HH:mm:ss")}
               </span>
             </Tooltip>
           );
         }
-        return startsAt;
+        return dayjs(record.startsAt).format("YYYY-MM-DD HH:mm:ss");
       },
     },
     {
