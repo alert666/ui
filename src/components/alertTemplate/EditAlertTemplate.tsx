@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import {
-  Drawer,
+  Modal, // 替换为 Modal
   Form,
   Input,
   Button,
@@ -18,123 +18,155 @@ import { Result } from "ahooks/lib/useRequest/src/types";
 import { ApiResponse } from "@/types";
 import { Base64 } from "js-base64";
 import dayjs from "dayjs";
-interface AlertTemplateDrawerProps {
-  toke: GlobalToken;
+
+interface AlertTemplateModalProps extends React.ComponentProps<typeof Modal> {
+  token: GlobalToken;
   visible: boolean;
   onClose: () => void;
   record: AlertTemplateRecord;
-  alertTemplateUpdateResult: Result<
+  alertTemplateUpdateResult?: Result<
     ApiResponse<unknown>,
     [id: string, data: AlertTemplateUpdateReq]
   >;
+  descriptionEdit?: boolean; // false 为可编辑，true 为禁用
 }
 
-const AlertTemplateDrawer: React.FC<AlertTemplateDrawerProps> = ({
-  toke,
+const AlertTemplateModal: React.FC<AlertTemplateModalProps> = ({
+  token,
   visible,
   onClose,
   record,
   alertTemplateUpdateResult,
+  descriptionEdit = false,
+  ...rest
 }) => {
   const [form] = Form.useForm();
 
-  // 当 record 变化时，重置表单值
   useEffect(() => {
-    if (record) {
+    if (visible && record) {
       form.setFieldsValue({
         description: record.description,
-        template: record.template, // 注入表单，validateFields 才能拿到
-        aggregationTemplate: record.aggregationTemplate, // 注入表单
+        template: record.template,
+        aggregationTemplate: record.aggregationTemplate,
       });
     }
-  }, [record, form]);
+  }, [record, form, visible]);
 
   const handleSave = async () => {
-    const values: AlertTemplateRecord = await form.validateFields();
-    const template = Base64.encode(values.template);
-    const aggregationTemplate = Base64.encode(values.aggregationTemplate);
-    if (record) {
-      const data = {
-        description: values.description,
-        template: template,
-        aggregationTemplate: aggregationTemplate,
-      };
-      alertTemplateUpdateResult.run(record.id, data);
-      onClose();
+    try {
+      const values = await form.validateFields();
+      // 如果处于预览模式，不执行保存
+      if (descriptionEdit) return;
+
+      const template = Base64.encode(values.template || "");
+      const aggregationTemplate = Base64.encode(
+        values.aggregationTemplate || "",
+      );
+
+      if (record) {
+        const data = {
+          description: values.description,
+          template: template,
+          aggregationTemplate: aggregationTemplate,
+        };
+        await alertTemplateUpdateResult?.runAsync(record.id, data);
+        onClose();
+      }
+    } catch (error) {
+      console.error("Validate Failed:", error);
     }
   };
 
-  if (!record) return null;
+  if (!record && visible) return null;
 
   return (
-    <Drawer
-      title="查看/编辑告警模板"
-      size="50%"
-      onClose={onClose}
+    <Modal
+      {...rest}
+      title={descriptionEdit ? "预览告警模板" : "编辑告警模板"}
+      centered
       open={visible}
-      extra={
+      onCancel={onClose}
+      destroyOnHidden
+      footer={
         <Space>
-          <Button onClick={onClose}>取消</Button>
-          <Button
-            onClick={handleSave}
-            loading={alertTemplateUpdateResult.loading}
-            type="primary"
-          >
-            保存修改
-          </Button>
+          <Button onClick={onClose}>{descriptionEdit ? "关闭" : "取消"}</Button>
+          {!descriptionEdit && ( // 仅在非只读模式下显示保存按钮
+            <Button
+              onClick={handleSave}
+              loading={alertTemplateUpdateResult?.loading}
+              type="primary"
+            >
+              保存修改
+            </Button>
+          )}
         </Space>
       }
     >
-      <Form<AlertTemplateRecord> form={form} layout="vertical">
-        {/* 只读的基础信息部分 */}
-        <Descriptions column={1} bordered size="small">
-          <Descriptions.Item label="ID">{record.id}</Descriptions.Item>
-          <Descriptions.Item label="名称">{record.name}</Descriptions.Item>
+      <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+        {/* 基础信息部分 */}
+        <Descriptions column={2} bordered size="small">
+          <Descriptions.Item label="ID">{record?.id}</Descriptions.Item>
+          <Descriptions.Item label="名称">{record?.name}</Descriptions.Item>
           <Descriptions.Item label="创建时间">
-            {dayjs(record.createdAt).format("YYYY-MM-DD HH:mm:ss")}
+            {record?.createdAt
+              ? dayjs(record.createdAt).format("YYYY-MM-DD HH:mm:ss")
+              : "-"}
           </Descriptions.Item>
           <Descriptions.Item label="最后更新">
-            {dayjs(record.updatedAt).format("YYYY-MM-DD HH:mm:ss")}
+            {record?.updatedAt
+              ? dayjs(record.updatedAt).format("YYYY-MM-DD HH:mm:ss")
+              : "-"}
           </Descriptions.Item>
         </Descriptions>
 
         <Divider orientation="horizontal">可编辑部分</Divider>
 
-        {/* 唯一可编辑的字段 */}
         <Form.Item
           name="description"
           label="描述"
-          rules={[{ required: true, message: "请输入描述" }]}
+          rules={[{ required: !descriptionEdit, message: "请输入描述" }]}
         >
-          <Input.TextArea rows={2} placeholder="请输入模板描述" />
+          <Input.TextArea
+            disabled={descriptionEdit}
+            rows={2}
+            placeholder="请输入模板描述"
+          />
         </Form.Item>
 
         <Divider orientation="horizontal">模板内容 (只读)</Divider>
 
-        {/* 只读的模板内容 */}
-        <Form.Item name="template" label="普通模板 (template)">
-          <CodeEditor
-            token={toke}
-            value={record.template}
-            language="yaml"
-            readOnly
-          />
-        </Form.Item>
+        <div style={{ display: "flex", gap: "16px" }}>
+          <Form.Item
+            name="template"
+            label="普通模板 (template)"
+            style={{ flex: 1 }}
+          >
+            <CodeEditor
+              token={token}
+              value={record?.template}
+              language="yaml"
+              readOnly
+              height="300px" // 建议给编辑器固定高度
+            />
+          </Form.Item>
 
-        <Form.Item
-          name="aggregationTemplate"
-          label="聚合模板 (aggregationTemplate)"
-        >
-          <CodeEditor
-            token={toke}
-            value={record.aggregationTemplate}
-            language="yaml"
-            readOnly
-          />
-        </Form.Item>
+          <Form.Item
+            name="aggregationTemplate"
+            label="聚合模板 (aggregationTemplate)"
+            style={{ flex: 1 }}
+          >
+            <CodeEditor
+              token={token}
+              value={record?.aggregationTemplate}
+              language="yaml"
+              readOnly
+              height="300px"
+            />
+          </Form.Item>
+        </div>
       </Form>
-    </Drawer>
+    </Modal>
   );
 };
 
-export default AlertTemplateDrawer;
+export default AlertTemplateModal;
