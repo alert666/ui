@@ -7,6 +7,7 @@ import {
 } from "@/services/alertChannel";
 import {
   AlertChannelItem,
+  AlertTemplateView,
   CHANNEL_SEARCH_DIMENSIONS,
   CreateAlertChanneRequest,
   GetAlertChannelListRequest,
@@ -20,6 +21,10 @@ import { GetAlertChannelColumns } from "@/types/alert/Channel.tsx";
 import { App, Button, Form, Input, Select, Space, Tag, theme } from "antd";
 import { PlusOutlined, SearchOutlined, SyncOutlined } from "@ant-design/icons";
 import EditAlertChannel from "@/components/alertChannel/Channel";
+import { GetAlertTemplate } from "@/services/alertTemplate";
+import AlertTemplateModal from "@/components/alertTemplate/EditAlertTemplate";
+import { AlertTemplateRecord } from "@/types/alert/template";
+import BindAlertTemplateComponent from "@/components/alertChannel/BindAlertTemplate";
 
 function AlertChannelPage() {
   const { message, modal } = App.useApp();
@@ -199,6 +204,7 @@ function AlertChannelPage() {
     setEditModalOpen(true);
   };
 
+  // ------ 删除函数 ------
   const deleteHander = (record: AlertChannelItem) => {
     modal.confirm({
       title: "确认删除",
@@ -208,8 +214,51 @@ function AlertChannelPage() {
     });
   };
 
+  // ------ 获取 AlertTemplate ------
+  const [alertTemplateView, setAlertTemplateView] = useState<AlertTemplateView>(
+    {} as AlertTemplateView,
+  );
+  const getAlertTemplateResult = useRequest(GetAlertTemplate, {
+    manual: true,
+    onSuccess: (data) => {
+      if (data) {
+        setAlertTemplateView({ open: true, template: data });
+      }
+    },
+  });
+
+  // ------ 绑定模板 ------
+  const [bindAlertTemplateOpen, setBindAlertTemplateOpen] =
+    useState<boolean>(false);
+  const [alertChannelRecord, setAlertChannelRecord] =
+    useState<AlertChannelItem>({} as AlertChannelItem);
+  const onClose = () => {
+    setBindAlertTemplateOpen(false);
+    setAlertChannelRecord({} as AlertChannelItem);
+  };
+
   return (
     <>
+      <BindAlertTemplateComponent
+        visible={bindAlertTemplateOpen}
+        record={alertChannelRecord}
+        token={token}
+        onCloseCabk={onClose}
+        message={message}
+      />
+      <AlertTemplateModal
+        width="60%"
+        token={token}
+        visible={alertTemplateView.open}
+        onClose={() => {
+          setAlertTemplateView({
+            open: false,
+            template: {} as AlertTemplateRecord,
+          });
+        }}
+        record={alertTemplateView.template}
+        descriptionEdit={true}
+      />
       <EditAlertChannel
         open={editModalOpen}
         data={editingRecord}
@@ -294,7 +343,14 @@ function AlertChannelPage() {
       <DynamicTable<AlertChannelItem>
         size="large"
         loading={alertChannelListRes.loading}
-        columns={GetAlertChannelColumns({ token, handleEdit, deleteHander })}
+        columns={GetAlertChannelColumns({
+          token,
+          handleEdit,
+          deleteHander,
+          getAlertTemplateResult,
+          setBindAlertTemplateOpen,
+          setAlertChannelRecord,
+        })}
         dataSource={alertChannelListRes.data?.list || []}
         pagination={{
           current: Number(searchParams.get("page")) || 1,

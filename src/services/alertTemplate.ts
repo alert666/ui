@@ -1,6 +1,7 @@
 import {
   AlertTemplateListReq,
   AlertTemplateListRes,
+  AlertTemplateRecord,
   AlertTemplateUpdateReq,
 } from "@/types/alert/template";
 import { del, get, put } from "./http";
@@ -21,4 +22,8 @@ export function UpdateAlertTemplate(
 
 export function DeleteAlertTemplate(id: string): Promise<ApiResponse> {
   return del<ApiResponse>(`/api/v1/alertTemplate/${id}`);
+}
+
+export function GetAlertTemplate(id: string): Promise<AlertTemplateRecord> {
+  return get<AlertTemplateRecord>(`/api/v1/alertTemplate/${id}`);
 }

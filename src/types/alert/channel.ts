@@ -1,4 +1,5 @@
 import { ChannelType } from "../enum";
+import { AlertTemplateRecord } from "./template";
 
 export interface AlertChannelItem {
   id: string;
@@ -8,9 +9,9 @@ export interface AlertChannelItem {
   type: string;
   status: number;
   aggregationStatus: number;
-  config: string;
+  config: JSON;
   description: string;
-  alertTemplateID: number;
+  alertTemplateID: string;
 }
 
 export interface GetAlertChannelListRequest {
@@ -42,14 +43,14 @@ export const CHANNEL_SEARCH_DIMENSIONS = [
 ];
 
 export interface UpdateAlertChanneRequest {
-  id: number;
+  id: string;
   name: string;
   type: string;
   status: number;
   aggregationStatus: number;
   config: JSON;
   description: string;
-  templateID: number;
+  templateID: string;
 }
 
 export interface CreateAlertChanneRequest {
@@ -59,4 +60,9 @@ export interface CreateAlertChanneRequest {
   aggregationStatus: number;
   config: JSON;
   description: string;
+}
+
+export interface AlertTemplateView {
+  template: AlertTemplateRecord;
+  open: boolean;
 }

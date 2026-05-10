@@ -1,5 +1,5 @@
 import AlertTemplateDetailComponent from "@/components/alertTemplate/alertTemplateDetial";
-import AlertTemplateDrawer from "@/components/alertTemplate/EditAlertTemplate";
+import AlertTemplateModal from "@/components/alertTemplate/EditAlertTemplate";
 import DynamicTable from "@/components/base/DynamicTable";
 import {
   DeleteAlertTemplate,
@@ -89,8 +89,9 @@ function AlertTemplatePage() {
         setEditTemplate={setEditTemplate}
         alertTemplateUpdateResult={alertTemplateUpdateResult}
       />
-      <AlertTemplateDrawer
-        toke={token}
+      <AlertTemplateModal
+        width="60%"
+        token={token}
         visible={alertTemplateDrawerOpen}
         onClose={() => {
           setAlertTemplateRecord({} as AlertTemplateRecord);
