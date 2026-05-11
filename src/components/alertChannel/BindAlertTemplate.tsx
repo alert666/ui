@@ -139,7 +139,7 @@ const BindAlertTemplateComponent: React.FC<BindProps> = ({
 
     const submitData: UpdateAlertChanneRequest = {
       ...record,
-      templateID: selectedId,
+      templateID: Number(selectedId),
     };
 
     updateResult.run(submitData);

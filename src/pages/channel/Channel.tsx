@@ -235,6 +235,7 @@ function AlertChannelPage() {
   const onClose = () => {
     setBindAlertTemplateOpen(false);
     setAlertChannelRecord({} as AlertChannelItem);
+    alertChannelListRes.refresh();
   };
 
   return (

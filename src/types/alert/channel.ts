@@ -50,7 +50,7 @@ export interface UpdateAlertChanneRequest {
   aggregationStatus: number;
   config: JSON;
   description: string;
-  templateID: string;
+  templateID: number;
 }
 
 export interface CreateAlertChanneRequest {
