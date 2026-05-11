@@ -85,6 +85,7 @@ const AlertTemplateModal: React.FC<AlertTemplateModalProps> = ({
       title={descriptionEdit ? "预览告警模板" : "编辑告警模板"}
       centered
       open={visible}
+      closable={false}
       onCancel={onClose}
       destroyOnHidden
       footer={

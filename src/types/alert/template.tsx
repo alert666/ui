@@ -15,9 +15,8 @@ export interface AlertTemplateUpdateReq {
 
 export interface EditTemplateState {
   templateDetailOpen: boolean;
+  templateRecord: AlertTemplateRecord;
   aggregation: boolean;
-  templateID: string;
-  template: string;
 }
 
 export interface AlertTemplateListRes {
@@ -35,6 +34,14 @@ export interface AlertTemplateRecord {
   description: string;
   template: string;
   aggregationTemplate: string;
+}
+
+export interface CreateAlertTemplateReq {
+  name: string;
+  description: string;
+  template: string;
+  aggregationTemplate: string;
+  alertChannelID?: number;
 }
 
 // 定义操作回调的接口
@@ -97,9 +104,8 @@ export const GetAlertTemplateColumns = (
           onClick={() => {
             setEditTemplate({
               templateDetailOpen: true,
+              templateRecord: record,
               aggregation: false,
-              templateID: record.id,
-              template: record.template,
             });
           }}
         >
@@ -117,9 +123,8 @@ export const GetAlertTemplateColumns = (
           onClick={() => {
             setEditTemplate({
               templateDetailOpen: true,
+              templateRecord: record,
               aggregation: true,
-              templateID: record.id,
-              template: record.aggregationTemplate,
             });
           }}
         >

@@ -58,6 +58,7 @@ const EditAlertChannel: React.FC<EditAlertChannelProps> = (props) => {
         status: values.status ? 1 : 0,
         aggregationStatus: values.aggregationStatus ? 1 : 0,
         config: JSON.parse(values.config),
+        templateID: data?.alertTemplateID,
       };
 
       onSave?.(payload);
@@ -77,6 +78,7 @@ const EditAlertChannel: React.FC<EditAlertChannelProps> = (props) => {
       onOk={handleOk}
       destroyOnHidden
       mask={{ closable: false }}
+      closable={false}
     >
       <Form
         form={form}

@@ -2,6 +2,7 @@ import AlertTemplateDetailComponent from "@/components/alertTemplate/alertTempla
 import AlertTemplateModal from "@/components/alertTemplate/EditAlertTemplate";
 import DynamicTable from "@/components/base/DynamicTable";
 import {
+  CreateAlertTemplate,
   DeleteAlertTemplate,
   GetAlertTemplateList,
   UpdateAlertTemplate,
@@ -9,14 +10,17 @@ import {
 import {
   AlertTemplateListReq,
   AlertTemplateRecord,
+  CreateAlertTemplateReq,
   EditTemplateState,
   GetAlertTemplateColumns,
 } from "@/types/alert/template";
 import { PageOptionEnum } from "@/types/enum";
 import { useRequest } from "ahooks";
-import { message, theme } from "antd";
+import { Button, message, theme } from "antd";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { PlusOutlined } from "@ant-design/icons";
+import CreateAlertTemplateModal from "@/components/alertTemplate/CreateAlertTemplate";
 
 function AlertTemplatePage() {
   // ------ 变量定义 ------
@@ -81,8 +85,32 @@ function AlertTemplatePage() {
     },
   });
 
+  // ------ 新建模版 ------
+  const createResult = useRequest(CreateAlertTemplate, {
+    manual: true,
+    onSuccess: () => {
+      alertTemplateResult.refresh();
+    },
+  });
+  const [createOpen, setCreateOpen] = useState<boolean>(false);
+  const HandleCreate = () => {
+    setCreateOpen(true);
+  };
+  const HandleCreateClose = () => {
+    setCreateOpen(false);
+  };
+  const HandleCreateSave = (values: CreateAlertTemplateReq) => {
+    createResult.run(values);
+  };
+
   return (
     <>
+      <CreateAlertTemplateModal
+        token={token}
+        visible={createOpen}
+        onClose={HandleCreateClose}
+        onSave={HandleCreateSave}
+      />
       <AlertTemplateDetailComponent
         token={token}
         editTemplate={editTemplate}
@@ -109,6 +137,9 @@ function AlertTemplatePage() {
           boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
         }}
       >
+        <Button type="primary" icon={<PlusOutlined />} onClick={HandleCreate}>
+          新建模板
+        </Button>
         <div
           style={{
             display: "flex",
