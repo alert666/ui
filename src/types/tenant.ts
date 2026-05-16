@@ -21,6 +21,7 @@ export interface TenantListRes {
 export interface TenantRecord {
   id: string;
   name: string;
+  label: string;
   description: string;
   createdAt: string;
   updatedAt: string;
@@ -36,5 +37,6 @@ export interface TenantCreateReq {
 }
 
 export interface TenantUpdateReq {
+  label: string;
   description: string;
 }

@@ -93,7 +93,15 @@ export const AlertDetailContent = (props: AlertDetailContentProps) => {
                   <Text strong>{data.id}</Text>
                 </Descriptions.Item>
                 <Descriptions.Item label="告警名称">
-                  <Text strong>{data.alertname}</Text>
+                  <Text strong copyable>
+                    {data.alertname}
+                  </Text>
+                </Descriptions.Item>
+
+                <Descriptions.Item label="告警指纹">
+                  <Text strong copyable>
+                    {data.fingerprint}
+                  </Text>
                 </Descriptions.Item>
                 <Descriptions.Item label="状态">
                   <Tag color={data.status === "firing" ? "red" : "green"}>

@@ -82,7 +82,7 @@ const LayoutPage = () => {
     }
 
     return res;
-  }, [location.pathname, firingCountReq.data]);
+  }, [firingCountReq.data]);
 
   // 4. 基础数据获取：用户信息、租户列表
   const { data: userData, loading: userLoad } = useRequest(UserInfo, {

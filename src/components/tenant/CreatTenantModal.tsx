@@ -67,6 +67,7 @@ function CreateTenantComponent(props: CreateTenantComponentProps) {
         form.setFieldsValue({
           name: initialData.name,
           description: initialData.description,
+          label: initialData.label,
         });
       } else {
         // 创建模式：重置为空
@@ -80,7 +81,10 @@ function CreateTenantComponent(props: CreateTenantComponentProps) {
       const values = await form.validateFields();
 
       if (isEdit && initialData) {
-        updateReq.run(initialData.id, { description: values.description });
+        updateReq.run(initialData.id, {
+          description: values.description,
+          label: values.label,
+        });
       } else {
         createReq.run(values);
       }
@@ -109,7 +113,7 @@ function CreateTenantComponent(props: CreateTenantComponentProps) {
         <Form.Item
           label="租户名称"
           name="name"
-          tooltip={isEdit ? "租户名称创建后不可修改" : ""}
+          tooltip={isEdit ? "租户名称创建后不可修改" : "租户名称"}
           rules={[
             { required: true, message: "请输入租户名称" },
             { min: 2, max: 20, message: "名称长度需在 2-20 个字符之间" },
@@ -121,6 +125,18 @@ function CreateTenantComponent(props: CreateTenantComponentProps) {
         >
           {/* 🌟 核心逻辑：如果是更新模式，禁用名称输入框 */}
           <Input placeholder="例如：test-tenant" disabled={isEdit} />
+        </Form.Item>
+
+        <Form.Item
+          label="租户标签"
+          name="label"
+          tooltip="租户标签, 展示的名称"
+          rules={[
+            { required: true, message: "请输入租户标签" },
+            { min: 2, max: 20, message: "名称长度需在 1-20 个字符之间" },
+          ]}
+        >
+          <Input placeholder="例如：北京一区" />
         </Form.Item>
 
         <Form.Item

@@ -29,6 +29,12 @@ export const GetTenantColumns = (
       render: (text) => <span className="font-bold">{text}</span>,
     },
     {
+      title: "标签",
+      dataIndex: "label",
+      key: "label",
+      render: (text) => <span className="font-bold">{text}</span>,
+    },
+    {
       title: "描述",
       dataIndex: "description",
       key: "description",

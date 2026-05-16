@@ -11,11 +11,8 @@ import {
 import { AlertHistoryItem, AlertHistoryUpdateRequest } from "./history";
 import type { ColumnsType } from "antd/es/table";
 import { TagsOutlined, ClockCircleOutlined } from "@ant-design/icons";
-import Big from "big.js";
 import dayjs from "dayjs";
-{
-  // dayjs(record.createdAt).format("YYYY-MM-DD HH:mm:ss");
-}
+
 interface AlertHistoryColumnsProps {
   token: GlobalToken;
   updateRun: (id: string, data: AlertHistoryUpdateRequest) => void;
@@ -51,16 +48,12 @@ export function GetAlertHistorycolumns(
         </Tooltip>
       ),
     },
-    {
-      title: "聚合ID",
-      dataIndex: "alertSendRecordID",
-      width: 100,
-      responsive: ["md"], // 中等屏幕及以上显示
-      sorter: (a, b) =>
-        new Big(a.alertSendRecordID)
-          .minus(new Big(b.alertSendRecordID))
-          .toNumber(),
-    },
+    // {
+    //   title: "告警指纹",
+    //   dataIndex: "fingerprint",
+    //   width: 100,
+    //   responsive: ["md"],
+    // },
     {
       title: "租户",
       dataIndex: "cluster",

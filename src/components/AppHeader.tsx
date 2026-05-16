@@ -9,6 +9,7 @@ import {
   Typography,
   Select,
   Tag,
+  Badge,
 } from "antd";
 import {
   MailOutlined,
@@ -75,7 +76,12 @@ export default function AppHeader({
       count: firingCounts[t.value] || 0,
     }));
 
-    return tenantOptions;
+    return tenantOptions.sort((a, b) => {
+      if (a.value === "") return -1;
+      if (b.value === "") return 1;
+
+      return b.count - a.count;
+    });
   }, [tenants, firingCounts]);
 
   const { run: logoutRun } = useRequest(UserLogout, {
@@ -207,12 +213,18 @@ export default function AppHeader({
               <ApartmentOutlined style={{ fontSize: 16 }} />
               <span style={{ fontSize: 14, userSelect: "none" }}>当前租户</span>
             </div>
-
             <Select
               variant="borderless"
-              showSearch
+              showSearch={{
+                filterOption: (input, option) => {
+                  const label = (option?.label ?? "").toString().toLowerCase();
+                  const value = (option?.value ?? "").toString().toLowerCase();
+                  const search = input.toLowerCase();
+                  return label.includes(search) || value.includes(search);
+                },
+              }}
               loading={tenantLoading}
-              value={currentTenant ?? ""} // 重要：null 匹配“所有租户”
+              value={currentTenant ?? ""}
               onChange={onTenantChange}
               options={options}
               className="min-w-[160px] font-medium px-2"
@@ -220,26 +232,29 @@ export default function AppHeader({
               optionRender={(option) => {
                 const data = option.data as CustomTenantOption;
                 const isGlobal = data.value === "";
+
                 return (
                   <div className="flex justify-between items-center w-full py-0.5">
-                    <span className="truncate" style={{ maxWidth: "140px" }}>
+                    <span
+                      className="truncate mr-2"
+                      style={{ maxWidth: "160px" }}
+                    >
                       {data.label}
                     </span>
+
                     {data.count > 0 && (
-                      <Tag
-                        variant="filled"
-                        color={isGlobal ? "processing" : "error"}
+                      <Badge
+                        count={data.count}
+                        overflowCount={99}
+                        color={isGlobal ? "#1890ff" : "#ff4d4f"}
                         style={{
-                          marginInlineEnd: 0,
-                          borderRadius: "10px",
                           fontSize: "11px",
-                          paddingInline: "6px",
-                          lineHeight: "18px",
                           height: "18px",
+                          lineHeight: "18px",
+                          minWidth: "18px",
+                          padding: "0 5px",
                         }}
-                      >
-                        {data.count > 99 ? "99+" : data.count}
-                      </Tag>
+                      />
                     )}
                   </div>
                 );
