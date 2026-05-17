@@ -12,7 +12,6 @@ import {
   AlertTemplateRecord,
   CreateAlertTemplateReq,
   EditTemplateState,
-  GetAlertTemplateColumns,
 } from "@/types/alert/template";
 import { PageOptionEnum } from "@/types/enum";
 import { useRequest } from "ahooks";
@@ -21,6 +20,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PlusOutlined } from "@ant-design/icons";
 import CreateAlertTemplateModal from "@/components/alertTemplate/CreateAlertTemplate";
+import { GetAlertTemplateColumns } from "@/components/alertTemplate/alertTemplateTableColums";
 
 function AlertTemplatePage() {
   // ------ 变量定义 ------

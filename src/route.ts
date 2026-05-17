@@ -14,6 +14,7 @@ import AlertHistoryPage from "./pages/alert/History";
 import AlertChannelPage from "./pages/channel/Channel";
 import Tenant from "./pages/tenant/Tenant";
 import AlertTemplatePage from "./pages/alert/Template";
+import AlertSilencePage from "./pages/alert/AlertSilence";
 export type MenuItem = Required<MenuProps>["items"][number];
 
 const router = createBrowserRouter([
@@ -61,6 +62,10 @@ const router = createBrowserRouter([
                 path: "template",
                 Component: AlertTemplatePage,
               },
+              {
+                path: "silence",
+                Component: AlertSilencePage,
+              },
             ],
           },
         ],
@@ -106,6 +111,7 @@ const commonMenuItem: MenuItem[] = [
       { key: "history", label: "告警历史" },
       { key: "channel", label: "告警通道" },
       { key: "template", label: "告警模版" },
+      { key: "silence", label: "告警静默" },
     ],
   },
 ];

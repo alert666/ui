@@ -17,10 +17,10 @@ import {
   InfoCircleOutlined,
 } from "@ant-design/icons"; // 引入图标
 import dayjs from "dayjs";
-import { AlertChannelItem } from "./channel";
-import { ChannelType } from "../enum";
-import { AlertTemplateRecord } from "./template";
 import { Result } from "ahooks/lib/useRequest/src/types";
+import { AlertChannelItem } from "@/types/alert/channel";
+import { AlertTemplateRecord } from "@/types/alert/template";
+import { ChannelType } from "@/types/enum";
 
 interface GetAlertChannelColumnsProps {
   token: GlobalToken;

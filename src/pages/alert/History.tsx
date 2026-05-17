@@ -25,7 +25,6 @@ import dayjs from "dayjs";
 import { useSearchParams } from "react-router-dom";
 
 import DynamicTable from "@/components/base/DynamicTable";
-import { GetAlertHistorycolumns } from "@/types/alert/History.tsx";
 import {
   AlertHistoryItem,
   AlertHistoryListRequest,
@@ -42,6 +41,7 @@ import useApp from "antd/es/app/useApp";
 import { CreateAlertSilenceRequest } from "@/types/alert/silence";
 import { PageOptionEnum } from "@/types/enum";
 import { AlertDetailContent } from "@/components/alertHistory/AlertHistory";
+import { GetAlertHistorycolumns } from "@/components/alertHistory/AlertHistoryTableColums";
 
 const AlertHistoryPage = () => {
   const { token } = theme.useToken();

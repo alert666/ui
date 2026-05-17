@@ -1,3 +1,20 @@
+import { ListReq } from "..";
+
+export interface AlertSilenceListReq extends ListReq {
+  status?: 0 | 1 | 2;
+  createdBy?: string;
+  startsAt?: number;
+  endsAt?: number;
+  Matchers?: Matcher[];
+}
+
+export interface AlertSilenceListRes {
+  page: number;
+  pageSize: number;
+  total: number;
+  list: AlertSilence[];
+}
+
 export interface CreateAlertSilenceRequest {
   cluster: string;
   type: number;
@@ -10,7 +27,7 @@ export interface CreateAlertSilenceRequest {
 }
 
 export interface AlertSilence {
-  id: number;
+  id: string;
   createdAt: string;
   updatedAt: string;
   cluster: string;
