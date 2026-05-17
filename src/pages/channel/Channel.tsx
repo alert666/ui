@@ -17,7 +17,7 @@ import { PageOptionEnum } from "@/types/enum";
 import { useRequest } from "ahooks";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { GetAlertChannelColumns } from "@/types/alert/Channel.tsx";
+// import { GetAlertChannelColumns } from "@/types/alert/Channel.tsx";
 import { App, Button, Form, Input, Select, Space, Tag, theme } from "antd";
 import { PlusOutlined, SearchOutlined, SyncOutlined } from "@ant-design/icons";
 import EditAlertChannel from "@/components/alertChannel/Channel";
@@ -25,6 +25,7 @@ import { GetAlertTemplate } from "@/services/alertTemplate";
 import AlertTemplateModal from "@/components/alertTemplate/EditAlertTemplate";
 import { AlertTemplateRecord } from "@/types/alert/template";
 import BindAlertTemplateComponent from "@/components/alertChannel/BindAlertTemplate";
+import { GetAlertChannelColumns } from "@/components/alertChannel/AlertChannelTableColums";
 
 function AlertChannelPage() {
   const { message, modal } = App.useApp();

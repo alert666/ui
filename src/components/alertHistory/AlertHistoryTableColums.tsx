@@ -8,10 +8,13 @@ import {
   Tooltip,
   Typography,
 } from "antd";
-import { AlertHistoryItem, AlertHistoryUpdateRequest } from "./history";
 import type { ColumnsType } from "antd/es/table";
 import { TagsOutlined, ClockCircleOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
+import {
+  AlertHistoryItem,
+  AlertHistoryUpdateRequest,
+} from "@/types/alert/history";
 
 interface AlertHistoryColumnsProps {
   token: GlobalToken;

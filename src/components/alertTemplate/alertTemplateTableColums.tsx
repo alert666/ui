@@ -1,48 +1,8 @@
+import { ApiResponse } from "@/types";
+import { AlertTemplateRecord, EditTemplateState } from "@/types/alert/template";
+import { Result } from "ahooks/lib/useRequest/src/types";
 import { Button, Popconfirm, Space } from "antd";
 import dayjs from "dayjs";
-import { ApiResponse, ListReq } from "..";
-import { Result } from "ahooks/lib/useRequest/src/types";
-
-export interface AlertTemplateListReq extends ListReq {
-  name?: string;
-}
-
-export interface AlertTemplateUpdateReq {
-  template?: string;
-  aggregationTemplate?: string;
-  description?: string;
-}
-
-export interface EditTemplateState {
-  templateDetailOpen: boolean;
-  templateRecord: AlertTemplateRecord;
-  aggregation: boolean;
-}
-
-export interface AlertTemplateListRes {
-  total: number;
-  page: number;
-  pageSize: number;
-  list: AlertTemplateRecord[];
-}
-
-export interface AlertTemplateRecord {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  name: string;
-  description: string;
-  template: string;
-  aggregationTemplate: string;
-}
-
-export interface CreateAlertTemplateReq {
-  name: string;
-  description: string;
-  template: string;
-  aggregationTemplate: string;
-  alertChannelID?: number;
-}
 
 // 定义操作回调的接口
 export interface GetAlertTemplateColumnsProps {
