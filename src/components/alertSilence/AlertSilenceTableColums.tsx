@@ -2,11 +2,11 @@ import { AlertSilence, Matcher } from "@/types/alert/silence";
 import { Space, Tag, Typography, Tooltip, Badge, Button, Divider } from "antd";
 import { ColumnsType } from "antd/es/table";
 import {
-  ClockCircleOutlined,
   EditOutlined,
   DeleteOutlined,
   UserOutlined,
-  PlayCircleOutlined,
+  PartitionOutlined,
+  KeyOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 
@@ -28,48 +28,85 @@ export const GetAlertSilenceColumns = (): ColumnsType<AlertSilence> => {
       width: 120,
     },
     {
-      title: "匹配规则 (Matchers)",
-      dataIndex: "matchers",
-      key: "matchers",
+      title: "静默规则 / 指纹",
+      key: "match_rule",
       minWidth: 400,
-      render: (matchers: Matcher[]) => {
-        const displayCount = 4;
-        const hasMore = matchers.length > displayCount;
-        const itemsToShow = matchers.slice(0, displayCount);
+      render: (_, record) => {
+        // 解构数据，设置默认值防止 null 报错
+        const { matchers = [], fingerprint } = record;
 
-        return (
-          <div
-            style={{ display: "flex", flexWrap: "wrap", alignItems: "center" }}
-          >
-            {itemsToShow.map((m, index) => (
-              <ModernMatcher key={index} m={m} />
-            ))}
-            {hasMore && (
-              <Tooltip
-                title={
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "4px",
-                    }}
-                  >
-                    {matchers.slice(displayCount).map((m, i) => (
-                      <div key={i}>{`${m.name} ${m.type} ${m.value}`}</div>
-                    ))}
-                  </div>
-                }
+        // 1. 优先判断指纹静默
+        if (fingerprint) {
+          return (
+            <Space>
+              <Tag
+                icon={<KeyOutlined />}
+                color="cyan"
+                style={{ borderRadius: "4px" }}
               >
-                <Tag
-                  color="default"
-                  style={{ cursor: "pointer", borderRadius: "6px" }}
+                指纹静默
+              </Tag>
+              <Text code copyable={{ text: fingerprint }}>
+                {fingerprint}
+              </Text>
+            </Space>
+          );
+        }
+
+        // 2. 判断 Label 匹配静默 (确保 matchers 不为 null 且有长度)
+        if (matchers && matchers.length > 0) {
+          const displayCount = 3;
+          const hasMore = matchers.length > displayCount;
+          const itemsToShow = matchers.slice(0, displayCount);
+
+          return (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              <Tag
+                icon={<PartitionOutlined />}
+                style={{ border: "none", backgroundColor: "#f5f5f5" }}
+              >
+                标签匹配
+              </Tag>
+              {itemsToShow.map((m, index) => (
+                <ModernMatcher key={index} m={m} />
+              ))}
+              {hasMore && (
+                <Tooltip
+                  title={
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "4px",
+                      }}
+                    >
+                      {matchers.slice(displayCount).map((m, i) => (
+                        <div key={i}>{`${m.name} ${m.type} ${m.value}`}</div>
+                      ))}
+                    </div>
+                  }
                 >
-                  +{matchers.length - displayCount} ...
-                </Tag>
-              </Tooltip>
-            )}
-          </div>
-        );
+                  <Tag
+                    color="default"
+                    style={{ cursor: "pointer", borderRadius: "6px" }}
+                  >
+                    +{matchers.length - displayCount} ...
+                  </Tag>
+                </Tooltip>
+              )}
+            </div>
+          );
+        }
+
+        // 3. 兜底显示
+        return <Text type="secondary">无匹配信息</Text>;
       },
     },
     {
@@ -98,78 +135,37 @@ export const GetAlertSilenceColumns = (): ColumnsType<AlertSilence> => {
       },
     },
     {
-      title: "开始时间",
-      dataIndex: "startsAt",
-      key: "startsAt",
-      width: 180,
-      sorter: (a, b) => dayjs(a.startsAt).unix() - dayjs(b.startsAt).unix(),
-      render: (text) => (
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <Text style={{ fontSize: "13px", fontWeight: 500 }}>
-            <PlayCircleOutlined style={{ color: "#52c41a", marginRight: 8 }} />
-            {dayjs(text).format("YYYY-MM-DD HH:mm")}
-          </Text>
-        </div>
-      ),
-    },
-    {
-      title: "结束时间",
-      dataIndex: "endsAt",
-      key: "endsAt",
-      width: 280, // 增加宽度以容纳一行显示
-      sorter: (a, b) => dayjs(a.endsAt).unix() - dayjs(b.endsAt).unix(),
-      render: (text) => {
-        const end = dayjs(text);
+      title: "有效期",
+      key: "times",
+      width: 250,
+      render: (_, record) => {
+        const end = dayjs(record.endsAt);
         const now = dayjs();
         const isExpired = end.isBefore(now);
-        const diffDays = end.diff(now, "day");
 
         return (
-          <div
-            style={{
-              whiteSpace: "nowrap",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-            }}
-          >
-            <ClockCircleOutlined
-              style={{ color: isExpired ? "#bfbfbf" : "#ff4d4f" }}
-            />
-
-            {/* 日期文本 */}
-            <Text
-              type={isExpired ? "secondary" : undefined}
-              style={{
-                fontSize: "13px",
-                color: isExpired ? "#bfbfbf" : "inherit",
-              }}
-            >
-              {end.format("YYYY-MM-DD HH:mm")}
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+            <Text type="secondary" style={{ fontSize: "12px" }}>
+              始：{dayjs(record.startsAt).format("YYYY-MM-DD HH:mm")}
             </Text>
-
-            {/* 动态状态标签 */}
-            {isExpired ? (
-              <Tag
-                variant="filled"
-                style={{
-                  color: "#bfbfbf",
-                  backgroundColor: "#f5f5f5",
-                  fontSize: "11px",
-                  margin: 0,
-                }}
-              >
-                已过期
-              </Tag>
-            ) : (
-              <Tag
-                variant="filled"
-                color={diffDays < 3 ? "red" : "orange"}
-                style={{ fontSize: "11px", margin: 0 }}
-              >
-                {diffDays === 0 ? "今天到期" : `剩 ${diffDays} 天`}
-              </Tag>
-            )}
+            <Space size={4}>
+              <Text style={{ fontSize: "12px" }}>
+                终：{end.format("YYYY-MM-DD HH:mm")}
+              </Text>
+              {isExpired ? (
+                <Tag variant="filled" style={{ margin: 0, fontSize: "11px" }}>
+                  已过期
+                </Tag>
+              ) : (
+                <Tag
+                  color="orange"
+                  variant="filled"
+                  style={{ margin: 0, fontSize: "11px" }}
+                >
+                  生效中
+                </Tag>
+              )}
+            </Space>
           </div>
         );
       },
@@ -178,51 +174,39 @@ export const GetAlertSilenceColumns = (): ColumnsType<AlertSilence> => {
       title: "创建人",
       dataIndex: "createdBy",
       key: "createdBy",
-      width: 120,
+      width: 100,
       render: (text) => (
         <Space size={4}>
-          <UserOutlined style={{ color: "#bfbfbf" }} />
-          <Text>{text}</Text>
+          <UserOutlined style={{ color: "#bfbfbf", fontSize: "12px" }} />
+          <Text style={{ fontSize: "13px" }}>{text}</Text>
         </Space>
       ),
-    },
-    {
-      title: "备注",
-      dataIndex: "comment",
-      key: "comment",
-      ellipsis: true,
-      render: (text) => <Text type="secondary">{text || "无备注"}</Text>,
     },
     {
       title: "操作",
       key: "action",
       fixed: "right",
-      width: 120,
+      width: 100,
       render: (_, record) => (
-        <Space separator={<Divider orientation="vertical" />}>
-          <Tooltip title="编辑">
-            <Button
-              type="text"
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => console.log("Edit", record.id)}
-            />
-          </Tooltip>
-          <Tooltip title="删除">
-            <Button
-              type="text"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => console.log("Delete", record.id)}
-            />
-          </Tooltip>
+        <Space split={<Divider type="vertical" />}>
+          <Button
+            type="link"
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => console.log("Edit", record.id)}
+          />
+          <Button
+            type="link"
+            size="small"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => console.log("Delete", record.id)}
+          />
         </Space>
       ),
     },
   ];
 };
-
 const ModernMatcher = ({ m }: { m: Matcher }) => {
   const isRegex = m.type.includes("~");
 
