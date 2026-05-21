@@ -16,14 +16,22 @@ export interface AlertSilenceListRes {
 }
 
 export interface CreateAlertSilenceRequest {
-  cluster: string;
   type: number;
   status: number;
   fingerprint: string;
   startsAt: number;
   endsAt: number;
   comment: string;
-  createdBy: string;
+}
+
+export interface CreateAlertSlienceReq {
+  status: number;
+  type: number;
+  startsAt: number;
+  endsAt: number;
+  comment: string;
+  matchers?: Matcher[];
+  fingerprint?: string;
 }
 
 export interface AlertSilence {

@@ -1,15 +1,23 @@
 import { GetAlertSilenceColumns } from "@/components/alertSilence/AlertSilenceTableColums";
+import AlertSilenceCreator from "@/components/alertSilence/CreateAlertSilence";
 import DynamicTable from "@/components/base/DynamicTable";
-import { GetAlertSilenceList } from "@/services/alertSilence";
-import { AlertSilence, AlertSilenceListReq } from "@/types/alert/silence";
+import {
+  CreateAlertSilence,
+  GetAlertSilenceList,
+} from "@/services/alertSilence";
+import {
+  AlertSilence,
+  AlertSilenceListReq,
+  CreateAlertSlienceReq,
+} from "@/types/alert/silence";
 import { PageOptionEnum } from "@/types/enum";
 import { useRequest } from "ahooks";
-import { theme } from "antd";
-import { useEffect } from "react";
+import { App, Button, theme } from "antd";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 function AlertSilencePage() {
-  // const { message, modal } = App.useApp();
+  const { message } = App.useApp();
   const { token } = theme.useToken();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -61,9 +69,33 @@ function AlertSilencePage() {
     alertSilenceListRes.run(params);
   }, [searchParams]);
 
+  // ------ 创建 AlertSilence ------
+  const [createAlertSilenceOpen, setCreateAlertSilenceOpen] =
+    useState<boolean>(false);
+
+  const handleCancel = () => {
+    setCreateAlertSilenceOpen(false);
+  };
+
+  const createSilenceResult = useRequest(CreateAlertSilence, {
+    manual: true,
+    debounceWait: 200,
+    onSuccess: () => {
+      message.success("创建成功");
+    },
+  });
+
   return (
     <>
-      {" "}
+      <AlertSilenceCreator
+        open={createAlertSilenceOpen}
+        handleCancel={handleCancel}
+        loading={createSilenceResult.loading}
+        handleOk={async (value: CreateAlertSlienceReq) => {
+          await createSilenceResult.runAsync(value);
+          alertSilenceListRes.refresh();
+        }}
+      />
       <div
         className="m-2 p-5"
         style={{
@@ -81,6 +113,13 @@ function AlertSilencePage() {
           }}
         >
           {/* 搜索 */}
+          <Button
+            onClick={() => {
+              setCreateAlertSilenceOpen(true);
+            }}
+          >
+            创建静默
+          </Button>
         </div>
 
         {/* {renderFilterTags.length > 0 && (

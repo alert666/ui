@@ -38,7 +38,7 @@ import {
 } from "@/services/alertHistory";
 import { CreateAlertSilence } from "@/services/alertSilence";
 import useApp from "antd/es/app/useApp";
-import { CreateAlertSilenceRequest } from "@/types/alert/silence";
+import { CreateAlertSlienceReq } from "@/types/alert/silence";
 import { PageOptionEnum } from "@/types/enum";
 import { AlertDetailContent } from "@/components/alertHistory/AlertHistory";
 import { GetAlertHistorycolumns } from "@/components/alertHistory/AlertHistoryTableColums";
@@ -327,15 +327,13 @@ const AlertHistoryPage = () => {
       ),
       onOk: async () => {
         const values = await silenceForm.validateFields();
-        const payload: CreateAlertSilenceRequest = {
-          cluster: record.cluster,
+        const payload: CreateAlertSlienceReq = {
           type: 1,
           fingerprint: record.fingerprint,
           status: 1,
           startsAt: dayjs().unix(),
           endsAt: values.endsAt.unix(),
           comment: values.comment,
-          createdBy: "console",
         };
         createSilenceRun(payload);
       },
