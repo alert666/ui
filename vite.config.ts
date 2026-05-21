@@ -24,7 +24,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "https://qqlx.net",
+        target: "https://cloud.qqlx.net",
         // target: "http://localhost:8080",
         changeOrigin: true,
         configure: (proxy) => {
