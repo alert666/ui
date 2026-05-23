@@ -15,22 +15,20 @@ import {
 } from "@/types/alert/channel";
 import { PageOptionEnum } from "@/types/enum";
 import { useRequest } from "ahooks";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { App, Button, Form, Input, Select, Space, Tag, theme } from "antd";
-import { PlusOutlined, SearchOutlined, SyncOutlined } from "@ant-design/icons";
+import { App, Button, theme } from "antd";
 import EditAlertChannel from "@/components/alertChannel/Channel";
 import { GetAlertTemplate } from "@/services/alertTemplate";
 import AlertTemplateModal from "@/components/alertTemplate/EditAlertTemplate";
 import { AlertTemplateRecord } from "@/types/alert/template";
 import BindAlertTemplateComponent from "@/components/alertChannel/BindAlertTemplate";
 import { GetAlertChannelColumns } from "@/components/alertChannel/AlertChannelTableColums";
+import SearchFilter from "@/components/base/SearchFilter";
 
 function AlertChannelPage() {
   const { message, modal } = App.useApp();
   const { token } = theme.useToken();
-  const [searchForm] = Form.useForm();
-  const activeKey = Form.useWatch("searchKey", searchForm);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // 1. 列表请求
@@ -97,85 +95,6 @@ function AlertChannelPage() {
     };
 
     alertChannelListRes.run(params);
-  }, [searchParams]);
-
-  // 搜索处理
-  const onHandleSearch = (values: {
-    searchKey: string;
-    searchValue: string;
-  }) => {
-    const { searchKey, searchValue } = values;
-    const newSearchParams = new URLSearchParams(searchParams);
-    newSearchParams.set("page", "1");
-    if (searchValue) {
-      newSearchParams.set(searchKey, searchValue);
-    } else {
-      newSearchParams.delete(searchKey);
-    }
-    setSearchParams(newSearchParams);
-  };
-
-  // 重置搜索
-  const handleReset = () => {
-    searchForm.resetFields();
-    setSearchParams({
-      page: PageOptionEnum.DEFAULTPAGE.toString(),
-      pageSize: PageOptionEnum.DEFAULTPAGESIZE.toString(),
-      tenant: localStorage.getItem("tenant") || "",
-    });
-  };
-
-  // 动态渲染搜索输入框
-  const SearchBar = () => {
-    const currentDim =
-      CHANNEL_SEARCH_DIMENSIONS.find((d) => d.value === activeKey) ||
-      CHANNEL_SEARCH_DIMENSIONS[0];
-    if (currentDim.type === "select") {
-      return (
-        <Select
-          style={{ width: 160 }}
-          placeholder="请选择"
-          options={currentDim.options}
-          allowClear
-        />
-      );
-    }
-    return (
-      <Input
-        style={{ width: 200 }}
-        placeholder={`输入${currentDim.label}搜索...`}
-        allowClear
-        prefix={<SearchOutlined />}
-        onPressEnter={() => searchForm.submit()}
-      />
-    );
-  };
-
-  // 筛选标签
-  const renderFilterTags = useMemo(() => {
-    const nodes: React.ReactNode[] = [];
-    CHANNEL_SEARCH_DIMENSIONS.forEach((item) => {
-      const val = searchParams.get(item.value);
-      if (val) {
-        const displayVal =
-          item.options?.find((o) => o.value === val)?.label || val;
-        nodes.push(
-          <Tag
-            key={item.value}
-            closable
-            color="geekblue"
-            onClose={() => {
-              const p = new URLSearchParams(searchParams);
-              p.delete(item.value);
-              setSearchParams(p);
-            }}
-          >
-            {item.label}: {displayVal}
-          </Tag>,
-        );
-      }
-    });
-    return nodes;
   }, [searchParams]);
 
   // 弹窗保存逻辑
@@ -278,69 +197,17 @@ function AlertChannelPage() {
         onSave={handleModalSave}
       />
 
-      <div
-        className="m-2 p-1"
-        style={{
-          backgroundColor: token.colorBgContainer,
-          borderRadius: token.borderRadiusLG,
-          border: `1px solid ${token.colorBorderSecondary}`,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-          }}
-        >
-          <Form form={searchForm} onFinish={onHandleSearch} style={{ flex: 1 }}>
-            <Space.Compact>
-              <Form.Item name="searchKey" noStyle initialValue="name">
-                <Select
-                  style={{ width: 110, textAlign: "center" }}
-                  options={CHANNEL_SEARCH_DIMENSIONS.map((item) => ({
-                    label: item.label,
-                    value: item.value,
-                  }))}
-                />
-              </Form.Item>
-              <Form.Item name="searchValue" noStyle>
-                {SearchBar()}
-              </Form.Item>
-              <Button
-                type="primary"
-                onClick={() => searchForm.submit()}
-                icon={<SearchOutlined />}
-              />
-              <Button onClick={handleReset}>重置</Button>
-              <Button
-                icon={<SyncOutlined spin={alertChannelListRes.loading} />}
-                onClick={() => alertChannelListRes.refresh()}
-                type="text"
-                style={{ marginLeft: 8 }}
-              />
-            </Space.Compact>
-          </Form>
-
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleCreateOpen}
-          >
+      <SearchFilter
+        dimensions={CHANNEL_SEARCH_DIMENSIONS}
+        searchParams={searchParams}
+        setSearchParams={setSearchParams}
+        onRefresh={() => alertChannelListRes.refresh()}
+        extra={
+          <Button type="primary" onClick={handleCreateOpen}>
             新建通道
           </Button>
-        </div>
-
-        {renderFilterTags.length > 0 && (
-          <div
-            className="mt-4 p-2 border-t border-dashed"
-            style={{ borderColor: token.colorBorderSecondary }}
-          >
-            <Space wrap>{renderFilterTags}</Space>
-          </div>
-        )}
-      </div>
+        }
+      />
 
       <DynamicTable<AlertChannelItem>
         size="large"

@@ -12,23 +12,21 @@ import {
   AlertTemplateRecord,
   CreateAlertTemplateReq,
   EditTemplateState,
+  TEMPLATE_SEARCH_DIMENSIONS,
 } from "@/types/alert/template";
 import { PageOptionEnum } from "@/types/enum";
 import { useRequest } from "ahooks";
 import { Button, message, theme } from "antd";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { PlusOutlined } from "@ant-design/icons";
 import CreateAlertTemplateModal from "@/components/alertTemplate/CreateAlertTemplate";
 import { GetAlertTemplateColumns } from "@/components/alertTemplate/alertTemplateTableColums";
+import SearchFilter from "@/components/base/SearchFilter";
 
 function AlertTemplatePage() {
   // ------ 变量定义 ------
   const { token } = theme.useToken();
-  // const [searchForm] = Form.useForm();
   const [searchParams, setSearchParams] = useSearchParams();
-  // const [activeDim, setActiveDim] = useState<string>("name");
-  // const { message } = App.useApp();
 
   // ------ 告警模版列表请求 ------
   const alertTemplateResult = useRequest(GetAlertTemplateList, {
@@ -93,9 +91,7 @@ function AlertTemplatePage() {
     },
   });
   const [createOpen, setCreateOpen] = useState<boolean>(false);
-  const HandleCreate = () => {
-    setCreateOpen(true);
-  };
+
   const HandleCreateClose = () => {
     setCreateOpen(false);
   };
@@ -128,33 +124,25 @@ function AlertTemplatePage() {
         record={alertTemplateRecord}
         alertTemplateUpdateResult={alertTemplateUpdateResult}
       />
-      <div
-        className="m-2 p-5"
-        style={{
-          backgroundColor: token.colorBgContainer,
-          borderRadius: token.borderRadiusLG,
-          border: `1px solid ${token.colorBorderSecondary}`,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-        }}
-      >
-        <Button type="primary" icon={<PlusOutlined />} onClick={HandleCreate}>
-          新建模板
-        </Button>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 16,
-            gap: 16,
-          }}
-        ></div>
-      </div>
+
+      <SearchFilter
+        dimensions={TEMPLATE_SEARCH_DIMENSIONS}
+        searchParams={searchParams}
+        setSearchParams={setSearchParams}
+        onRefresh={() => alertTemplateResult.refresh()}
+        extra={
+          <Button type="primary" onClick={() => setCreateOpen(true)}>
+            新建模板
+          </Button>
+        }
+      />
+
       <DynamicTable
         size="large"
         loading={alertTemplateResult.loading}
         dataSource={alertTemplateResult.data?.list || []}
         columns={GetAlertTemplateColumns({
+          token,
           setEditTemplate,
           setAlertTemplateRecord,
           alertTemplateDelteResult,

@@ -1,18 +1,35 @@
 import { AlertSilence, Matcher } from "@/types/alert/silence";
-import { Space, Tag, Typography, Tooltip, Badge, Button, Divider } from "antd";
+import {
+  Space,
+  Tag,
+  Typography,
+  Tooltip,
+  Badge,
+  Button,
+  Popconfirm,
+  GlobalToken,
+} from "antd";
 import { ColumnsType } from "antd/es/table";
 import {
-  EditOutlined,
   DeleteOutlined,
   UserOutlined,
   PartitionOutlined,
   KeyOutlined,
+  QuestionCircleOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
-
+import { ApiResponse } from "@/types";
+import { Result } from "ahooks/lib/useRequest/src/types";
 const { Text } = Typography;
 
-export const GetAlertSilenceColumns = (): ColumnsType<AlertSilence> => {
+interface GetAlertSilenceColumnsProps {
+  token: GlobalToken;
+  deleteResult: Result<ApiResponse<unknown>, [id: string]>;
+}
+
+export const GetAlertSilenceColumns = (
+  props: GetAlertSilenceColumnsProps,
+): ColumnsType<AlertSilence> => {
   return [
     {
       title: "ID",
@@ -26,6 +43,15 @@ export const GetAlertSilenceColumns = (): ColumnsType<AlertSilence> => {
       dataIndex: "cluster",
       key: "cluster",
       width: 120,
+      render: (name: string) => (
+        <Typography.Text
+          copyable
+          strong
+          style={{ color: props.token.colorPrimary }}
+        >
+          {name}
+        </Typography.Text>
+      ),
     },
     {
       title: "静默规则 / 指纹",
@@ -188,21 +214,19 @@ export const GetAlertSilenceColumns = (): ColumnsType<AlertSilence> => {
       fixed: "right",
       width: 100,
       render: (_, record) => (
-        <Space split={<Divider type="vertical" />}>
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => console.log("Edit", record.id)}
-          />
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => console.log("Delete", record.id)}
-          />
-        </Space>
+        <Popconfirm
+          title="确定要删除该模板吗？"
+          description="删除后将无法找回，请谨慎操作。"
+          onConfirm={() => {
+            props.deleteResult.run(record.id);
+          }}
+          okText="确定"
+          cancelText="取消"
+          okButtonProps={{ loading: props.deleteResult.loading }}
+          icon={<QuestionCircleOutlined style={{ color: "red" }} />}
+        >
+          <Button type="link" size="small" danger icon={<DeleteOutlined />} />
+        </Popconfirm>
       ),
     },
   ];

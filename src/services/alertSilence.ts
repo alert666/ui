@@ -3,7 +3,7 @@ import {
   AlertSilenceListRes,
   CreateAlertSlienceReq,
 } from "@/types/alert/silence";
-import { get, post } from "./http";
+import { del, get, post } from "./http";
 import { ApiResponse } from "@/types";
 
 export function GetAlertSilenceList(
@@ -16,4 +16,8 @@ export function CreateAlertSilence(
   data: CreateAlertSlienceReq,
 ): Promise<ApiResponse> {
   return post<ApiResponse>("/api/v1/alertSilence", data);
+}
+
+export function DeleteAlertSilence(id: string): Promise<ApiResponse> {
+  return del<ApiResponse>(`/api/v1/alertSilence/${id}`);
 }

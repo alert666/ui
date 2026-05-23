@@ -3,6 +3,7 @@ import AlertSilenceCreator from "@/components/alertSilence/CreateAlertSilence";
 import DynamicTable from "@/components/base/DynamicTable";
 import {
   CreateAlertSilence,
+  DeleteAlertSilence,
   GetAlertSilenceList,
 } from "@/services/alertSilence";
 import {
@@ -13,21 +14,11 @@ import {
 } from "@/types/alert/silence";
 import { PageOptionEnum } from "@/types/enum";
 import { useRequest } from "ahooks";
-import {
-  App,
-  Button,
-  Form,
-  Input,
-  Select,
-  Space,
-  Tag,
-  theme,
-  Typography,
-} from "antd";
+import { App, Button, theme } from "antd";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { SearchOutlined, SyncOutlined } from "@ant-design/icons";
 import { GetUserOptions } from "@/services/user";
+import SearchFilter from "@/components/base/SearchFilter";
 
 function AlertSilencePage() {
   const { message } = App.useApp();
@@ -42,7 +33,7 @@ function AlertSilencePage() {
     const page = searchParams.get("page");
     const pageSize = searchParams.get("pageSize");
     const rawStatus = searchParams.get("status"); // 1. 提前获取 status
-
+    const createdBy = searchParams.get("createdBy"); // 1. 提前获取 status
     // 2. 统一拦截判断：如果任一核心参数缺失，则补全 URL 并拦截请求
     if (!page || !pageSize || rawStatus === null) {
       const newParams = new URLSearchParams(searchParams);
@@ -77,6 +68,7 @@ function AlertSilencePage() {
       page: Number(page),
       pageSize: Number(pageSize),
       status: validatedStatus,
+      createdBy: createdBy ? createdBy : undefined,
     };
 
     alertSilenceListRes.run(params);
@@ -99,9 +91,6 @@ function AlertSilencePage() {
   });
 
   // ------ 搜索逻辑 ------
-  const [searchForm] = Form.useForm();
-  const activeKey = Form.useWatch("searchKey", searchForm);
-
   const userOptionsResult = useRequest(GetUserOptions);
   // 使用 useMemo 将基础配置和接口数据合成
   const searchDimensions = useMemo(() => {
@@ -113,94 +102,14 @@ function AlertSilencePage() {
     });
   }, [userOptionsResult.data]);
 
-  // 搜索逻辑
-  const onHandleSearch = (values: {
-    searchKey: string;
-    searchValue: string;
-  }) => {
-    const { searchKey, searchValue } = values;
-    const newSearchParams = new URLSearchParams(searchParams);
-    newSearchParams.set("page", "1");
-    if (searchValue) {
-      newSearchParams.set(searchKey, searchValue);
-    } else {
-      newSearchParams.delete(searchKey);
-    }
-    setSearchParams(newSearchParams);
-    searchForm.setFieldValue("searchValue", undefined);
-  };
-
-  // 动态渲染搜索输入框
-  const SearchBar = () => {
-    const currentDim =
-      searchDimensions.find((d) => d.value === activeKey) ||
-      searchDimensions[0];
-    if (currentDim.type === "select") {
-      return (
-        <Select
-          showSearch={{
-            filterOption: (input, option) => {
-              const label = (option?.label ?? "").toString().toLowerCase();
-              const value = (option?.value ?? "").toString().toLowerCase();
-              const search = input.toLowerCase();
-              return label.includes(search) || value.includes(search);
-            },
-          }}
-          style={{ width: 160 }}
-          placeholder="请选择"
-          options={currentDim.options}
-          allowClear
-        />
-      );
-    }
-    return (
-      <Input
-        style={{ width: 200 }}
-        placeholder={`输入${currentDim.label}搜索...`}
-        allowClear
-        prefix={<SearchOutlined />}
-        onPressEnter={() => searchForm.submit()}
-      />
-    );
-  };
-
-  // 重置逻辑
-  const handleReset = () => {
-    searchForm.resetFields();
-    setSearchParams({
-      page: PageOptionEnum.DEFAULTPAGE.toString(),
-      pageSize: PageOptionEnum.DEFAULTPAGESIZE.toString(),
-      status: "1",
-      tenant: localStorage.getItem("tenant") || "",
-    });
-  };
-
-  // 筛选标签
-  const renderFilterTags = useMemo(() => {
-    const nodes: React.ReactNode[] = [];
-    searchDimensions.forEach((item) => {
-      const val = searchParams.get(item.value);
-      if (val) {
-        const displayVal =
-          item.options?.find((o) => o.value === val)?.label || val;
-        nodes.push(
-          <Tag
-            key={item.value}
-            closable
-            color="geekblue"
-            onClose={() => {
-              const p = new URLSearchParams(searchParams);
-              p.delete(item.value);
-              setSearchParams(p);
-            }}
-          >
-            {item.label}: {displayVal}
-          </Tag>,
-        );
-      }
-    });
-    return nodes;
-  }, [searchParams]);
+  // ------ 删除逻辑 ------
+  const deleteResult = useRequest(DeleteAlertSilence, {
+    manual: true,
+    debounceWait: 100,
+    onSuccess: () => {
+      alertSilenceListRes.refresh();
+    },
+  });
 
   return (
     <>
@@ -213,83 +122,26 @@ function AlertSilencePage() {
           alertSilenceListRes.refresh();
         }}
       />
-      <div
-        className="m-2 p-2"
-        style={{
-          backgroundColor: token.colorBgContainer,
-          borderRadius: token.borderRadiusLG,
-          border: `1px solid ${token.colorBorderSecondary}`,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-          }}
-        >
-          <Form form={searchForm} onFinish={onHandleSearch}>
-            <Space.Compact>
-              <Form.Item name="searchKey" noStyle initialValue="createdBy">
-                <Select
-                  style={{ width: 110, textAlign: "center" }}
-                  showSearch
-                  options={searchDimensions.map((item) => ({
-                    label: item.label,
-                    value: item.value,
-                  }))}
-                />
-              </Form.Item>
-              <Form.Item name="searchValue" noStyle>
-                {SearchBar()}
-              </Form.Item>
-              <Button
-                type="primary"
-                onClick={() => searchForm.submit()}
-                icon={<SearchOutlined />}
-              />
-              <Button onClick={handleReset}>重置</Button>
-              <Button
-                icon={<SyncOutlined />}
-                onClick={() => alertSilenceListRes.refresh()}
-                type="text"
-                style={{ marginLeft: 8 }}
-              />
-            </Space.Compact>
-          </Form>
 
+      <SearchFilter
+        dimensions={searchDimensions}
+        searchParams={searchParams}
+        setSearchParams={setSearchParams}
+        onRefresh={() => alertSilenceListRes.refresh()}
+        extra={
           <Button
             type="primary"
-            onClick={() => {
-              setCreateAlertSilenceOpen(true);
-            }}
+            onClick={() => setCreateAlertSilenceOpen(true)}
           >
-            创建静默
+            新建静默
           </Button>
-        </div>
-
-        {renderFilterTags.length > 0 && (
-          <div
-            className="mt-4 p-2 flex items-center border-t border-dashed"
-            style={{ borderColor: token.colorBorderSecondary }}
-          >
-            <Typography.Text
-              type="secondary"
-              className="mr-3"
-              style={{ fontSize: 12, display: "flex", alignItems: "center" }}
-            >
-              <SearchOutlined style={{ marginRight: 4 }} /> 当前筛选:
-            </Typography.Text>{" "}
-            <Space wrap>{renderFilterTags}</Space>
-          </div>
-        )}
-      </div>
+        }
+      />
 
       <DynamicTable<AlertSilence>
         size="large"
         loading={alertSilenceListRes.loading}
-        columns={GetAlertSilenceColumns()}
+        columns={GetAlertSilenceColumns({ token, deleteResult })}
         dataSource={alertSilenceListRes.data?.list || []}
         pagination={{
           current: Number(searchParams.get("page")) || 1,

@@ -41,14 +41,21 @@ export function GetAlertHistorycolumns(
         showTitle: false,
       },
       render: (alertname: string) => (
-        <Tooltip placement="topLeft" title={alertname}>
-          <Typography.Text
-            copyable={alertname ? { text: alertname } : false}
-            strong
-          >
-            {alertname}
-          </Typography.Text>
-        </Tooltip>
+        <Typography.Text
+          strong
+          style={{
+            color: token.colorPrimary,
+            width: "100%",
+          }}
+          ellipsis={{
+            tooltip: alertname,
+          }}
+          copyable={{
+            text: alertname,
+          }}
+        >
+          {alertname}
+        </Typography.Text>
       ),
     },
     // {
@@ -108,7 +115,17 @@ export function GetAlertHistorycolumns(
       width: 180,
       // responsive: ["xxl"], // 如果你希望在普通分辨率下也显示，可以删掉这行
       sorter: (a, b) => (a.instance || "").localeCompare(b.instance || ""),
-      render: (instance: string) => {
+      render: (_: string, record: AlertHistoryItem) => {
+        let instance = "";
+        const labels = record.labels;
+        if (labels["node"]) {
+          instance = labels["node"];
+        } else if (record.instance) {
+          instance = record.instance;
+        } else {
+          instance = labels["pod"];
+        }
+
         return (
           <Typography.Text
             // 增加复制功能，方便排查时快速拷贝 IP/主机名

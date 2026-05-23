@@ -40,3 +40,12 @@ export interface CreateAlertTemplateReq {
   aggregationTemplate: string;
   alertChannelID?: number;
 }
+
+export const TEMPLATE_SEARCH_DIMENSIONS = [
+  {
+    label: "模板名称",
+    value: "name",
+    type: "input",
+    options: [] as { label: string; value: string }[],
+  },
+];

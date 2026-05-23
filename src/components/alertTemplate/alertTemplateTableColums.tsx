@@ -1,11 +1,12 @@
 import { ApiResponse } from "@/types";
 import { AlertTemplateRecord, EditTemplateState } from "@/types/alert/template";
 import { Result } from "ahooks/lib/useRequest/src/types";
-import { Button, Popconfirm, Space } from "antd";
+import { Button, GlobalToken, Popconfirm, Space, Typography } from "antd";
 import dayjs from "dayjs";
 
 // 定义操作回调的接口
 export interface GetAlertTemplateColumnsProps {
+  token: GlobalToken;
   setEditTemplate: React.Dispatch<React.SetStateAction<EditTemplateState>>;
   setAlertTemplateRecord: React.Dispatch<
     React.SetStateAction<AlertTemplateRecord>
@@ -18,6 +19,7 @@ export const GetAlertTemplateColumns = (
   props: GetAlertTemplateColumnsProps,
 ) => {
   const {
+    token,
     setEditTemplate,
     setAlertTemplateRecord,
     alertTemplateDelteResult,
@@ -34,7 +36,12 @@ export const GetAlertTemplateColumns = (
       title: "模板名称",
       dataIndex: "name",
       key: "name",
-      ellipsis: true,
+      ellipsis: true, // 这里的 ellipsis 会对容器生效
+      render: (name: string) => (
+        <Typography.Text copyable strong style={{ color: token.colorPrimary }}>
+          {name}
+        </Typography.Text>
+      ),
     },
     {
       title: "描述",
