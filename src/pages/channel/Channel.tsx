@@ -17,7 +17,6 @@ import { PageOptionEnum } from "@/types/enum";
 import { useRequest } from "ahooks";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-// import { GetAlertChannelColumns } from "@/types/alert/Channel.tsx";
 import { App, Button, Form, Input, Select, Space, Tag, theme } from "antd";
 import { PlusOutlined, SearchOutlined, SyncOutlined } from "@ant-design/icons";
 import EditAlertChannel from "@/components/alertChannel/Channel";
@@ -122,6 +121,7 @@ function AlertChannelPage() {
     setSearchParams({
       page: PageOptionEnum.DEFAULTPAGE.toString(),
       pageSize: PageOptionEnum.DEFAULTPAGESIZE.toString(),
+      tenant: localStorage.getItem("tenant") || "",
     });
   };
 
@@ -279,7 +279,7 @@ function AlertChannelPage() {
       />
 
       <div
-        className="m-2 p-5"
+        className="m-2 p-1"
         style={{
           backgroundColor: token.colorBgContainer,
           borderRadius: token.borderRadiusLG,

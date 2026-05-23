@@ -71,11 +71,7 @@ const CreateUserModal = ({ open, onClose, refresh }: CreateUserModalProps) => {
                 name="name"
                 label="名称"
                 rules={[
-                  { required: true, min: 2, max: 20, message: "请输入名称" },
-                  {
-                    pattern: /^[A-Za-z0-9-_]+$/,
-                    message: "名称必须只包含字母、数字、下划线和连字符",
-                  },
+                  { required: true, min: 2, max: 10, message: "请输入名称" },
                 ]}
               >
                 <Input />

@@ -112,7 +112,7 @@ const AlertSilenceCreator: React.FC<AlertSilenceCreatorProps> = ({
         centered: true,
         title: "确认创建静默规则？",
         icon: <ExclamationCircleFilled />,
-        content: silenceType === 2 ? "..." : "...",
+        // content: silenceType === 2 ? "..." : "...",
         okText: "确认创建",
         cancelText: "取消",
         onOk: async () => {
@@ -133,9 +133,9 @@ const AlertSilenceCreator: React.FC<AlertSilenceCreatorProps> = ({
   return (
     <ModalComponent
       open={open}
-      centered
+      // centered
       handleCancel={onCancel}
-      width="60%"
+      width="1000px"
       footer={[
         <Button key="cancel" onClick={onCancel}>
           取消

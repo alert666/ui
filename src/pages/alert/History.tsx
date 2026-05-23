@@ -350,7 +350,7 @@ const AlertHistoryPage = () => {
   return (
     <div className="">
       <div
-        className="m-2 p-5"
+        className="m-2 p-2"
         style={{
           backgroundColor: token.colorBgContainer,
           borderRadius: token.borderRadiusLG,
@@ -365,19 +365,29 @@ const AlertHistoryPage = () => {
               <Space.Compact style={{ boxShadow: "0 2px 0 rgba(0,0,0,0.015)" }}>
                 <Form.Item name="searchKey" noStyle initialValue="alertName">
                   <Select
+                    showSearch={{
+                      filterOption: (input, option) => {
+                        const label = (option?.label ?? "")
+                          .toString()
+                          .toLowerCase();
+                        const value = (option?.value ?? "")
+                          .toString()
+                          .toLowerCase();
+                        const search = input.toLowerCase();
+                        return label.includes(search) || value.includes(search);
+                      },
+                    }}
                     style={{ width: 110, textAlign: "center" }}
                     className="bg-gray-50"
                     onChange={(val) => {
                       setActiveDim(val);
                       form.setFieldValue("searchValue", undefined);
                     }}
-                  >
-                    {SEARCH_DIMENSIONS.map((d) => (
-                      <Select.Option key={d.value} value={d.value}>
-                        {d.label}
-                      </Select.Option>
-                    ))}
-                  </Select>
+                    options={SEARCH_DIMENSIONS.map((d) => ({
+                      label: d.label,
+                      value: d.value,
+                    }))}
+                  />
                 </Form.Item>
                 <Form.Item name="searchValue" noStyle>
                   {SEARCH_DIMENSIONS.find((d) => d.value === activeDim)

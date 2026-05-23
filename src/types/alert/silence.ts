@@ -54,3 +54,12 @@ export interface Matcher {
   value: string;
   type: string;
 }
+
+export const SILEMCE_SEARCH_DIMENSIONS = [
+  {
+    label: "创建人",
+    value: "createdBy",
+    type: "select",
+    options: [{ label: "刘硕", value: "刘硕" }],
+  },
+];

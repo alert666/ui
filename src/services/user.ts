@@ -36,7 +36,7 @@ export function UserDelete(id: string): Promise<unknown> {
 
 export function userQuery(
   id: string,
-  query?: string
+  query?: string,
 ): Promise<UserInfoResponse> {
   return get<UserInfoResponse>(`/api/v1/user/${id}`, {
     query: query,
@@ -44,13 +44,17 @@ export function userQuery(
 }
 
 export function UserUpdateByAdmin(
-  data: UserUpdateRequest
+  data: UserUpdateRequest,
 ): Promise<ApiResponse> {
   return put<ApiResponse>(`/api/v1/user/${data.id}`, data);
 }
 
 export function UserUpdateBySelf(
-  data: UserUpdateRequest
+  data: UserUpdateRequest,
 ): Promise<ApiResponse> {
   return put<ApiResponse>(`/api/v1/user/self`, data);
+}
+
+export function GetUserOptions(): Promise<{ label: string; value: string }[]> {
+  return get<{ label: string; value: string }[]>("/api/v1/user/options");
 }
