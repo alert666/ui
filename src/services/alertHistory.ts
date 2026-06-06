@@ -33,3 +33,10 @@ export function GetAlertHistory(
 ): Promise<AlertHistoryItem> {
   return get<AlertHistoryItem>(`/api/v1/alertHistory/${params.id}`);
 }
+export function GetAlertNameOptions(): Promise<
+  { label: string; value: string }[]
+> {
+  return get<{ label: string; value: string }[]>(
+    `/api/v1/alertHistory/alertNameOptions`,
+  );
+}

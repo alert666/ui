@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import {
   Form,
   Input,
@@ -26,6 +26,8 @@ import dayjs, { Dayjs } from "dayjs";
 import ModalComponent from "../base/Modal"; // 请确保路径正确
 import type { GetProps } from "antd";
 import { CreateAlertSlienceReq } from "@/types/alert/silence";
+import { useRequest } from "ahooks";
+import { GetAlertNameOptions } from "@/services/alertHistory";
 
 // --- 类型定义 ---
 interface InternalFormValues extends Omit<
@@ -73,27 +75,7 @@ const AlertSilenceCreator: React.FC<AlertSilenceCreatorProps> = ({
   const { token } = theme.useToken();
   const [form] = Form.useForm<InternalFormValues>();
 
-  // 监听表单变化
-  const formValues = Form.useWatch([], form);
   const silenceType = Form.useWatch("type", form) || 2;
-
-  // 格式化预览 JSON
-  const generatedJson = useMemo((): CreateAlertSlienceReq | null => {
-    if (!formValues?.timeRange) return null;
-    const [start, end] = formValues.timeRange;
-
-    const base = {
-      status: 1,
-      type: silenceType,
-      startsAt: start ? start.unix() : 0,
-      endsAt: end ? end.unix() : 0,
-      comment: formValues.comment || "",
-    };
-
-    return silenceType === 2
-      ? { ...base, matchers: formValues.matchers || [] }
-      : { ...base, fingerprint: formValues.fingerprint || "" };
-  }, [formValues, silenceType]);
 
   const onCancel = () => {
     form.resetFields();
@@ -103,21 +85,48 @@ const AlertSilenceCreator: React.FC<AlertSilenceCreatorProps> = ({
   // 创建逻辑（包含校验和二次确认）
   const onCreate = async () => {
     try {
-      // 1. 表单校验
-      await form.validateFields();
-      if (!generatedJson) return;
+      const formValues = await form.validateFields();
+
+      let clusterItem = formValues.matchers?.find(
+        (item) => item.name === "cluster",
+      );
+      if (clusterItem) {
+        clusterItem.type = "=";
+        clusterItem.value = localStorage.getItem("tenant") || "";
+      } else {
+        clusterItem = {
+          name: "cluster",
+          type: "=",
+          value: localStorage.getItem("tenant") || "",
+        };
+      }
+
+      formValues.matchers?.push(clusterItem);
+      const [start, end] = formValues.timeRange;
+      const payload: CreateAlertSlienceReq = {
+        status: 1,
+        type: formValues.type,
+        startsAt: start ? start.unix() : 0,
+        endsAt: end ? end.unix() : 0,
+        comment: formValues.comment || "",
+        matchers: formValues.matchers,
+      };
+
+      if (formValues.type === 1) {
+        payload.fingerprint = formValues.fingerprint;
+        payload.matchers = [];
+      }
 
       // 2. 二次确认
       const confirmRef = modal.confirm({
         centered: true,
         title: "确认创建静默规则？",
         icon: <ExclamationCircleFilled />,
-        // content: silenceType === 2 ? "..." : "...",
         okText: "确认创建",
         cancelText: "取消",
         onOk: async () => {
           try {
-            await handleOk(generatedJson);
+            await handleOk(payload);
             onCancel();
           } catch (error) {
             confirmRef.destroy();
@@ -130,12 +139,38 @@ const AlertSilenceCreator: React.FC<AlertSilenceCreatorProps> = ({
     }
   };
 
+  // ------ 动态获取静默Label ------
+  const getAlertNameOptionsResult = useRequest(GetAlertNameOptions);
+
+  const getSilenceVauleCompon = (name: number) => {
+    const currentName = form.getFieldValue(["matchers", name, "name"]);
+    let component = <Input placeholder="标签值 (Value)" />;
+
+    if (currentName === "alertname") {
+      component = (
+        <Select
+          showSearch
+          loading={getAlertNameOptionsResult.loading}
+          options={getAlertNameOptionsResult.data}
+        />
+      );
+    }
+    return component;
+  };
+
   return (
     <ModalComponent
+      centered
       open={open}
-      // centered
       handleCancel={onCancel}
       width="1000px"
+      styles={{
+        body: {
+          maxHeight: "80vh",
+          overflowY: "auto",
+          paddingRight: 8,
+        },
+      }}
       footer={[
         <Button key="cancel" onClick={onCancel}>
           取消
@@ -165,8 +200,13 @@ const AlertSilenceCreator: React.FC<AlertSilenceCreatorProps> = ({
           initialValues={{
             type: 2,
             comment: "",
-            matchers: [{ name: "namespace", type: "=", value: "system" }],
-            timeRange: [dayjs(), dayjs().add(1, "hour")],
+            matchers: [
+              {
+                name: "alertname",
+                type: "=",
+              },
+            ],
+            timeRange: [dayjs(), dayjs().add(4, "hour")],
           }}
         >
           <Form.Item name="type" label="静默维度">
@@ -234,6 +274,39 @@ const AlertSilenceCreator: React.FC<AlertSilenceCreatorProps> = ({
                 </Text>
               </div>
 
+              <Row gutter={12} align="middle" style={{ marginBottom: 12 }}>
+                <Col span={8}>
+                  <Form.Item
+                    rules={[{ required: true, message: "必填" }]}
+                    style={{ marginBottom: 20 }}
+                  >
+                    <Input
+                      disabled
+                      placeholder="标签名 (Key)"
+                      value={"cluster"}
+                    />
+                  </Form.Item>
+                </Col>
+
+                <Col span={4}>
+                  <Form.Item style={{ marginBottom: 20 }}>
+                    <Input disabled value={"="} />
+                  </Form.Item>
+                </Col>
+
+                <Col span={10}>
+                  <Form.Item
+                    rules={[{ required: true, message: "必填" }]}
+                    style={{ marginBottom: 20 }}
+                  >
+                    <Input
+                      disabled
+                      value={localStorage.getItem("tenant") || ""}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+
               <Form.List name="matchers">
                 {(fields, { add, remove }) => (
                   <>
@@ -244,13 +317,25 @@ const AlertSilenceCreator: React.FC<AlertSilenceCreatorProps> = ({
                         align="middle"
                         style={{ marginBottom: 12 }}
                       >
-                        {/* 标签名 - 占 8/24 */}
                         <Col span={8}>
                           <Form.Item
                             {...restField}
                             name={[name, "name"]}
-                            rules={[{ required: true, message: "必填" }]}
-                            style={{ marginBottom: 0 }} // 去除 Item 默认底边距，由 Row 统一控制
+                            rules={[
+                              { required: true, message: "必填" },
+                              {
+                                validator: (_, value) => {
+                                  const forbiddenNames = ["cluster"];
+                                  if (forbiddenNames.includes(value)) {
+                                    return Promise.reject(
+                                      new Error(`不能使用保留名称: ${value}`),
+                                    );
+                                  }
+                                  return Promise.resolve();
+                                },
+                              },
+                            ]}
+                            style={{ marginBottom: 20 }}
                           >
                             <Input placeholder="标签名 (Key)" />
                           </Form.Item>
@@ -261,7 +346,7 @@ const AlertSilenceCreator: React.FC<AlertSilenceCreatorProps> = ({
                           <Form.Item
                             {...restField}
                             name={[name, "type"]}
-                            style={{ marginBottom: 0 }}
+                            style={{ marginBottom: 20 }}
                           >
                             <Select
                               options={["=", "=~", "!=", "!~"].map((op) => ({
@@ -272,26 +357,42 @@ const AlertSilenceCreator: React.FC<AlertSilenceCreatorProps> = ({
                           </Form.Item>
                         </Col>
 
-                        {/* 标签值 - 占 10/24 */}
                         <Col span={10}>
                           <Form.Item
-                            {...restField}
-                            name={[name, "value"]}
-                            rules={[{ required: true, message: "必填" }]}
-                            style={{ marginBottom: 0 }}
+                            noStyle
+                            shouldUpdate={(prev: unknown, cur: unknown) => {
+                              const p = prev as InternalFormValues;
+                              const c = cur as InternalFormValues;
+                              return (
+                                p?.matchers?.[name]?.name !==
+                                c?.matchers?.[name]?.name
+                              );
+                            }}
                           >
-                            <Input placeholder="标签值 (Value)" />
+                            {() => {
+                              return (
+                                <Form.Item
+                                  {...restField}
+                                  name={[name, "value"]}
+                                  rules={[{ required: true, message: "必填" }]}
+                                  style={{ marginBottom: 20 }}
+                                >
+                                  {getSilenceVauleCompon(name)}
+                                </Form.Item>
+                              );
+                            }}
                           </Form.Item>
                         </Col>
 
-                        {/* 删除按钮 - 占 2/24 */}
-                        <Col span={2} style={{ textAlign: "right" }}>
-                          <Button
-                            type="text"
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => remove(name)}
-                          />
+                        <Col span={2}>
+                          <Form.Item style={{ marginBottom: 20 }}>
+                            <Button
+                              type="text"
+                              danger
+                              icon={<DeleteOutlined />}
+                              onClick={() => remove(name)}
+                            />
+                          </Form.Item>
                         </Col>
                       </Row>
                     ))}
@@ -301,7 +402,7 @@ const AlertSilenceCreator: React.FC<AlertSilenceCreatorProps> = ({
                       onClick={() => add({ name: "", type: "=", value: "" })}
                       block
                       icon={<PlusOutlined />}
-                      style={{ marginTop: 8 }}
+                      // style={{ marginTop: 28 }}
                     >
                       添加匹配项
                     </Button>

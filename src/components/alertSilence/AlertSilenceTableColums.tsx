@@ -38,21 +38,20 @@ export const GetAlertSilenceColumns = (
       width: 70,
       render: (id) => <Text type="secondary">#{id}</Text>,
     },
-    {
-      title: "所属集群",
-      dataIndex: "cluster",
-      key: "cluster",
-      width: 120,
-      render: (name: string) => (
-        <Typography.Text
-          copyable
-          strong
-          style={{ color: props.token.colorPrimary }}
-        >
-          {name}
-        </Typography.Text>
-      ),
-    },
+    // {
+    //   title: "所属集群",
+    //   dataIndex: "cluster",
+    //   key: "cluster",
+    //   render: (name: string) => (
+    //     <Typography.Text
+    //       copyable
+    //       strong
+    //       style={{ color: props.token.colorPrimary }}
+    //     >
+    //       {name}
+    //     </Typography.Text>
+    //   ),
+    // },
     {
       title: "静默规则 / 指纹",
       key: "match_rule",
