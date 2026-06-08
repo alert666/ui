@@ -24,7 +24,6 @@ function AlertSilencePage() {
   const { message } = App.useApp();
   const { token } = theme.useToken();
   const [searchParams, setSearchParams] = useSearchParams();
-
   // ------ silence 列表请求 ------
   const alertSilenceListRes = useRequest(GetAlertSilenceList, { manual: true });
 

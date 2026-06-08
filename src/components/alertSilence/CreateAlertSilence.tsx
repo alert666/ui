@@ -28,6 +28,7 @@ import type { GetProps } from "antd";
 import { CreateAlertSlienceReq } from "@/types/alert/silence";
 import { useRequest } from "ahooks";
 import { GetAlertNameOptions } from "@/services/alertHistory";
+import { useSearchParams } from "react-router-dom";
 
 // --- 类型定义 ---
 interface InternalFormValues extends Omit<
@@ -74,6 +75,12 @@ const AlertSilenceCreator: React.FC<AlertSilenceCreatorProps> = ({
   const { modal } = App.useApp();
   const { token } = theme.useToken();
   const [form] = Form.useForm<InternalFormValues>();
+  // 1. 在组件顶部获取 searchParams
+  const [searchParams] = useSearchParams();
+
+  // 2. 从 searchParams 中提取当前的 tenant，并把 localStorage 作为兜底备份
+  const currentTenant =
+    searchParams.get("tenant") || localStorage.getItem("tenant") || "";
 
   const silenceType = Form.useWatch("type", form) || 2;
 
@@ -92,12 +99,12 @@ const AlertSilenceCreator: React.FC<AlertSilenceCreatorProps> = ({
       );
       if (clusterItem) {
         clusterItem.type = "=";
-        clusterItem.value = localStorage.getItem("tenant") || "";
+        clusterItem.value = currentTenant;
       } else {
         clusterItem = {
           name: "cluster",
           type: "=",
-          value: localStorage.getItem("tenant") || "",
+          value: currentTenant,
         };
       }
 
@@ -299,10 +306,7 @@ const AlertSilenceCreator: React.FC<AlertSilenceCreatorProps> = ({
                     rules={[{ required: true, message: "必填" }]}
                     style={{ marginBottom: 20 }}
                   >
-                    <Input
-                      disabled
-                      value={localStorage.getItem("tenant") || ""}
-                    />
+                    <Input disabled value={currentTenant} />
                   </Form.Item>
                 </Col>
               </Row>

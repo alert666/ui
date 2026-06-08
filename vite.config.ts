@@ -25,7 +25,8 @@ export default defineConfig({
     proxy: {
       "/api": {
         // target: "https://cloud.qqlx.net",
-        target: "http://localhost:8080",
+        target: "https://cloud.suanlene.cn",
+        // target: "http://localhost:8080",
         changeOrigin: true,
         configure: (proxy) => {
           proxy.on("proxyRes", (_, __, res) => {
