@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+﻿import { createBrowserRouter } from "react-router-dom";
 import { MenuProps } from "antd";
 import Root from "./pages/Root";
 import RolePage from "./pages/role/Role";
@@ -15,6 +15,7 @@ import AlertChannelPage from "./pages/channel/Channel";
 import Tenant from "./pages/tenant/Tenant";
 import AlertTemplatePage from "./pages/alert/Template";
 import AlertSilencePage from "./pages/alert/AlertSilence";
+import AlertManagerPage from "./pages/alert/AlertManager";
 export type MenuItem = Required<MenuProps>["items"][number];
 
 const router = createBrowserRouter([
@@ -61,6 +62,10 @@ const router = createBrowserRouter([
               {
                 path: "template",
                 Component: AlertTemplatePage,
+              },
+              {
+                path: "alertmanager",
+                Component: AlertManagerPage,
               },
               {
                 path: "silence",
@@ -112,6 +117,7 @@ const commonMenuItem: MenuItem[] = [
       { key: "channel", label: "告警通道" },
       { key: "template", label: "告警模版" },
       { key: "silence", label: "告警静默" },
+      { key: "alertmanager", label: "告警配置" },
     ],
   },
 ];
