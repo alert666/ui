@@ -11,6 +11,7 @@ import {
 loader.config({ monaco });
 
 interface CodeEditorProps {
+  loading?: boolean;
   token: GlobalToken;
   value?: string;
   onChange?: (value: string | undefined) => void;
@@ -23,6 +24,7 @@ interface CodeEditorProps {
 }
 
 const CodeEditor: React.FC<CodeEditorProps> = ({
+  loading,
   value,
   onChange,
   language = "json",
@@ -125,6 +127,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
 
       {/* 编辑器本体 */}
       <Editor
+        loading={loading}
         height={height}
         language={language}
         value={value}

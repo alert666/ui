@@ -47,6 +47,8 @@ const SHOW_TENANT_PATHS = [
   "/workspace/alert/history",
   "/workspace/alert/silence",
   "/workspace/alert/template",
+  // "/workspace/alert/channel",
+  "/workspace/alert/alertmanager",
 ];
 
 export default function AppHeader({
