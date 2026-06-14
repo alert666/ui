@@ -22,7 +22,6 @@ const AlertManagerPage = () => {
   const [configContent, setConfigContent] = useState("");
   const { message } = useApp();
   const [searchParams] = useSearchParams();
-  const tenant = searchParams.get("tenant") || "";
   // 获取配置
   const getAlertManagerConfigResult = useRequest(GetAlertManagerConfig, {
     manual: true,
@@ -47,7 +46,7 @@ const AlertManagerPage = () => {
 
   // 初始加载
   useEffect(() => {
-    getAlertManagerConfigResult.run(tenant);
+    getAlertManagerConfigResult.run();
   }, [searchParams]);
 
   const handleEdit = () => {
@@ -55,15 +54,15 @@ const AlertManagerPage = () => {
   };
 
   const handleSave = async () => {
-    console.log(configContent);
     const base64Config = Base64.encode(configContent);
-    console.log(base64Config);
-
-    updateReq.run(tenant, base64Config);
+    updateReq.run(base64Config);
   };
 
   const handleCancelEdit = () => {
-    setConfigContent(getAlertManagerConfigResult.data?.data || "");
+    const alertConfig = Base64.decode(
+      getAlertManagerConfigResult.data?.data || "",
+    );
+    setConfigContent(alertConfig);
     setIsEditing(false);
   };
 
