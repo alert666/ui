@@ -18,7 +18,7 @@ GIT_SHA     := $(shell git rev-parse --short=7 HEAD 2>/dev/null || echo "unknown
 TIME_STAMP  := $(shell date +%Y%m%d-%H%m%S)
 
 # 拼接最终的镜像 TAG（格式示例：main-f4a5874-20260601-155722）
-IMAGE_TAG   := $(BRANCH)-$(GIT_SHA)-$(TIME_STAMP)
+IMAGE_TAG   := $(subst /,-,$(BRANCH))-$(GIT_SHA)-$(TIME_STAMP)
 
 # ================= 伪目标声明 =================
 .PHONY: all build push build-push show-tag
