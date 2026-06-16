@@ -34,3 +34,7 @@ export function CreateAlertTemplate(
 ): Promise<ApiResponse> {
   return post<ApiResponse>(`/api/v1/alertTemplate`, data);
 }
+
+export function CopyAlertTemplate(id: string, data: { name: string }): Promise<ApiResponse> {
+  return post<ApiResponse>(`/api/v1/alertTemplate/${id}/copy`, data);
+}

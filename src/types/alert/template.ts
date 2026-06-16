@@ -8,12 +8,9 @@ export interface AlertTemplateUpdateReq {
   template?: string;
   aggregationTemplate?: string;
   description?: string;
-}
-
-export interface EditTemplateState {
-  templateDetailOpen: boolean;
-  templateRecord: AlertTemplateRecord;
-  aggregation: boolean;
+  receiveIdType?: string;
+  receiveId?: string;
+  alertChannelID?: number;
 }
 
 export interface AlertTemplateListRes {
@@ -31,6 +28,14 @@ export interface AlertTemplateRecord {
   description: string;
   template: string;
   aggregationTemplate: string;
+  receiveIdType: string;
+  receiveId: string;
+  alertChannelID: number;
+  alertChannel?: {
+    id: number;
+    name: string;
+    type: string;
+  };
 }
 
 export interface CreateAlertTemplateReq {
@@ -38,7 +43,9 @@ export interface CreateAlertTemplateReq {
   description: string;
   template: string;
   aggregationTemplate: string;
-  alertChannelID?: number;
+  alertChannelID: number;
+  receiveIdType: string;
+  receiveId: string;
 }
 
 export const TEMPLATE_SEARCH_DIMENSIONS = [

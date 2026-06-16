@@ -4,11 +4,14 @@ import {
   Input,
   Modal,
   ModalProps,
+  Popover,
   Select,
   Switch,
+  Typography,
   theme,
   App,
 } from "antd";
+import { InfoCircleOutlined } from "@ant-design/icons";
 import CodeEditor from "../codeEditor/CodeEditor";
 import {
   CHANNEL_SEARCH_DIMENSIONS,
@@ -17,10 +20,122 @@ import {
   UpdateAlertChanneRequest,
 } from "@/types/alert/channel";
 
+const CONFIG_HINT = (
+  <div
+    style={{ maxWidth: 560, fontSize: 12, maxHeight: 520, overflowY: "auto" }}
+  >
+    <Typography.Text strong style={{ fontSize: 12 }}>
+      配置格式参考：
+    </Typography.Text>
+    <div style={{ marginTop: 8 }}>
+      <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+        <strong>飞书自建应用</strong> — Channel.Config 存入 App ID +
+        Secret（传输凭证）；Template 指定 ReceiveIdType / ReceiveId 确定接收者
+      </Typography.Text>
+      <pre
+        style={{
+          margin: "4px 0 0",
+          fontSize: 11,
+          color: "#666",
+          background: "#f5f5f5",
+          padding: "4px 8px",
+          borderRadius: 4,
+          overflow: "auto",
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-all",
+        }}
+      >
+        {`{"app_id":"cli_xxx","app_secret":"xxx"}`}
+      </pre>
+    </div>
+    <div style={{ marginTop: 8 }}>
+      <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+        <strong>飞书机器人</strong> — Channel.Config 存入 Webhook URL +
+        Secret；Template 接收者字段留空（URL 已决定目标）
+      </Typography.Text>
+      <pre
+        style={{
+          margin: "4px 0 0",
+          fontSize: 11,
+          color: "#666",
+          background: "#f5f5f5",
+          padding: "4px 8px",
+          borderRadius: 4,
+          overflow: "auto",
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-all",
+        }}
+      >
+        {`{"webhook_url":"https://open.feishu.cn/xxx","secret":"xxx"}`}
+      </pre>
+    </div>
+    <div style={{ marginTop: 8 }}>
+      <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+        <strong>钉钉机器人</strong> — Channel.Config 存入 Webhook URL +
+        Secret；Template 接收者字段留空
+      </Typography.Text>
+      <pre
+        style={{
+          margin: "4px 0 0",
+          fontSize: 11,
+          color: "#666",
+          background: "#f5f5f5",
+          padding: "4px 8px",
+          borderRadius: 4,
+          overflow: "auto",
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-all",
+        }}
+      >
+        {`{"webhook_url":"https://oapi.dingtalk.com/robot/send?access_token=xxx","secret":"SECxxx"}`}
+      </pre>
+    </div>
+    <div style={{ marginTop: 8 }}>
+      <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+        <strong>邮件 SMTP</strong> — Channel.Config 存入 SMTP
+        凭证；Template.ReceiveIdType = email，ReceiveId = 收件地址
+      </Typography.Text>
+      <pre
+        style={{
+          margin: "4px 0 0",
+          fontSize: 11,
+          color: "#666",
+          background: "#f5f5f5",
+          padding: "4px 8px",
+          borderRadius: 4,
+          overflow: "auto",
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-all",
+        }}
+      >
+        {`{"smtp_host":"smtp.example.com","smtp_port":465,"username":"alert@example.com","password":"xxx"}`}
+      </pre>
+    </div>
+    <div style={{ marginTop: 8 }}>
+      <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+        <strong>通用 Webhook</strong>
+      </Typography.Text>
+      <pre
+        style={{
+          margin: "4px 0 0",
+          fontSize: 11,
+          color: "#666",
+          background: "#f5f5f5",
+          padding: "4px 8px",
+          borderRadius: 4,
+          overflow: "auto",
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-all",
+        }}
+      >
+        {`{"url":"https://example.com/webhook","secret":"xxx","headers":{"X-Custom":"value"}}`}
+      </pre>
+    </div>
+  </div>
+);
+
 export interface EditAlertChannelProps extends ModalProps {
-  // 当前编辑的行数据，新增时为 {} 或 null
   data?: AlertChannelItem | null;
-  // 统一的保存回调（由父组件决定是创建还是更新）
   onSave?: (data: CreateAlertChanneRequest | UpdateAlertChanneRequest) => void;
 }
 
@@ -30,11 +145,9 @@ const EditAlertChannel: React.FC<EditAlertChannelProps> = (props) => {
   const { token } = theme.useToken();
   const { message } = App.useApp();
 
-  // 监听 Modal 打开，进行数据回显和转换
   useEffect(() => {
     if (modalProps.open) {
       if (data?.id) {
-        // 编辑模式：对象转字符串，数字转布尔
         form.setFieldsValue({
           ...data,
           status: data.status === 1,
@@ -42,7 +155,6 @@ const EditAlertChannel: React.FC<EditAlertChannelProps> = (props) => {
           config: data.config ? JSON.stringify(data.config, null, 2) : "{}",
         });
       } else {
-        // 新增模式：重置表单
         form.resetFields();
       }
     }
@@ -51,22 +163,18 @@ const EditAlertChannel: React.FC<EditAlertChannelProps> = (props) => {
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-      // 数据发往后端前的转换：字符串转回对象，布尔转回数字
       const payload = {
         ...values,
         id: data?.id,
         status: values.status ? 1 : 0,
         aggregationStatus: values.aggregationStatus ? 1 : 0,
         config: JSON.parse(values.config),
-        templateID: data?.alertTemplateID,
       };
-
       onSave?.(payload);
     } catch (error: unknown) {
       if (error instanceof SyntaxError) {
         message.error("配置项 JSON 格式不正确，请检查");
       } else if (error instanceof Error) {
-        // 此处不处理 Form 校验失败，Form 自己会变红
         console.error(error.message);
       }
     }
@@ -132,7 +240,25 @@ const EditAlertChannel: React.FC<EditAlertChannelProps> = (props) => {
 
         <Form.Item
           name="config"
-          label="详细配置 (JSON)"
+          label={
+            <span>
+              详细配置 (JSON)
+              <Popover
+                content={CONFIG_HINT}
+                title={null}
+                trigger="click"
+                placement="right"
+              >
+                <InfoCircleOutlined
+                  style={{
+                    marginLeft: 6,
+                    color: token.colorTextQuaternary,
+                    cursor: "pointer",
+                  }}
+                />
+              </Popover>
+            </span>
+          }
           rules={[
             { required: true, message: "配置不能为空" },
             {
