@@ -101,12 +101,38 @@ export const GetAlertTemplateColumns = (
       title: "接收者ID",
       dataIndex: "receiveId",
       key: "receiveId",
-      ellipsis: true,
-      render: (text: string) => (
-        <Tooltip title={text}>
-          <div style={ellipsisStyle}>{text || "-"}</div>
-        </Tooltip>
-      ),
+      render: (text: string) => {
+        if (!text) return "-";
+        let ids: string[] = [];
+        try {
+          const parsed = JSON.parse(text);
+          ids = Array.isArray(parsed) ? parsed : [];
+        } catch {
+          ids = [];
+        }
+        if (ids.length === 0) return "-";
+        return (
+          <Space size={4} wrap>
+            {ids.map((id, i) => (
+              <Tooltip key={i} title={id}>
+                <Typography.Text
+                  code
+                  style={{
+                    fontSize: 11,
+                    maxWidth: 160,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    display: "inline-block",
+                  }}
+                >
+                  {id}
+                </Typography.Text>
+              </Tooltip>
+            ))}
+          </Space>
+        );
+      },
     },
     {
       title: "创建时间",

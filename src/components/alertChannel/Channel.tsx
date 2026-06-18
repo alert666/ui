@@ -92,8 +92,7 @@ const CONFIG_HINT = (
     </div>
     <div style={{ marginTop: 8 }}>
       <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-        <strong>邮件 SMTP</strong> — Channel.Config 存入 SMTP
-        凭证；Template.ReceiveIdType = email，ReceiveId = 收件地址
+        <strong>邮件 SMTP</strong> — Channel.Config 存入 SMTP 凭证
       </Typography.Text>
       <pre
         style={{
@@ -108,8 +107,16 @@ const CONFIG_HINT = (
           wordBreak: "break-all",
         }}
       >
-        {`{"smtp_host":"smtp.example.com","smtp_port":465,"username":"alert@example.com","password":"xxx"}`}
+{`{
+  "smtp_host": "xxx",
+  "smtp_port": 465,
+  "username": "xxx",
+  "password": "xxx"
+}`}
       </pre>
+      <Typography.Text type="secondary" style={{ fontSize: 11, marginTop: 4, display: "block" }}>
+        模板中 ReceiveIdType = email，ReceiveId 填入收件邮箱地址
+      </Typography.Text>
     </div>
     <div style={{ marginTop: 8 }}>
       <Typography.Text type="secondary" style={{ fontSize: 12 }}>

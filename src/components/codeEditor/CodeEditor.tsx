@@ -15,7 +15,7 @@ interface CodeEditorProps {
   token: GlobalToken;
   value?: string;
   onChange?: (value: string | undefined) => void;
-  language?: "json" | "yaml" | "javascript" | "sql" | "markdown";
+  language?: "json" | "yaml" | "javascript" | "sql" | "markdown" | "html";
   readOnly?: boolean;
   height?: string | number;
   title?: string;

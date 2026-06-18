@@ -59,6 +59,7 @@ export function GetAlertChannelColumns(
           [ChannelType.FEI_SHU_APP]: "blue",
           [ChannelType.FEI_SHU_BOOT]: "cyan",
           [ChannelType.WEB_HOOK]: "purple",
+          [ChannelType.EMAIL]: "green",
         };
         return (
           <Tag color={colorMap[type] || "default"}>{getChannelType(type)}</Tag>
@@ -156,6 +157,8 @@ const getChannelType = (tye: string): string => {
       return "飞书机器人";
     case ChannelType.WEB_HOOK:
       return "Webhook";
+    case ChannelType.EMAIL:
+      return "邮件";
     default:
       return "未知类型";
   }

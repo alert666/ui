@@ -59,6 +59,7 @@ const AlertTemplateModal: React.FC<AlertTemplateModalProps> = ({
   ...rest
 }) => {
   const [form] = Form.useForm();
+  const watchedChannelID = Form.useWatch("alertChannelID", form);
   const [isEditing, setIsEditing] = useState(false);
 
   const channelListResult = useRequest(
@@ -79,6 +80,18 @@ const AlertTemplateModal: React.FC<AlertTemplateModalProps> = ({
     { ready: visible },
   );
 
+  // 根据选中的渠道类型决定编辑器语言：email → html，其他 → yaml
+  const editorLang = useMemo(() => {
+    const chId = watchedChannelID ?? record?.alertChannelID;
+    if (!chId) return "yaml";
+    const ch = (channelListResult.data?.list || []).find(
+      (c) => Number(c.id) === chId
+    );
+    return ch?.type === "email" ? "html" : "yaml";
+  }, [watchedChannelID, channelListResult.data, record?.alertChannelID]);
+
+  const editorLabel = editorLang === "html" ? "模板内容 (HTML)" : "模板内容 (YAML)";
+
   const decodedTemplate = useMemo(
     () => safeDecode(record?.template || ""),
     [record?.template],
@@ -90,10 +103,20 @@ const AlertTemplateModal: React.FC<AlertTemplateModalProps> = ({
 
   useEffect(() => {
     if (visible && record) {
+      // Parse receiveId from JSON string to array
+      let receiveIdArr: string[] = [];
+      if (record.receiveId) {
+        try {
+          const parsed = JSON.parse(record.receiveId);
+          receiveIdArr = Array.isArray(parsed) ? parsed : [];
+        } catch {
+          receiveIdArr = [];
+        }
+      }
       form.setFieldsValue({
         alertChannelID: record.alertChannelID,
         receiveIdType: record.receiveIdType,
-        receiveId: record.receiveId,
+        receiveId: receiveIdArr,
         description: record.description,
         template: decodedTemplate,
         aggregationTemplate: decodedAggTemplate,
@@ -107,10 +130,19 @@ const AlertTemplateModal: React.FC<AlertTemplateModalProps> = ({
   };
 
   const handleCancelEdit = () => {
+    let receiveIdArr: string[] = [];
+    if (record.receiveId) {
+      try {
+        const parsed = JSON.parse(record.receiveId);
+        receiveIdArr = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        receiveIdArr = [];
+      }
+    }
     form.setFieldsValue({
       alertChannelID: record.alertChannelID,
       receiveIdType: record.receiveIdType,
-      receiveId: record.receiveId,
+      receiveId: receiveIdArr,
       description: record.description,
       template: decodedTemplate,
       aggregationTemplate: decodedAggTemplate,
@@ -250,11 +282,13 @@ const AlertTemplateModal: React.FC<AlertTemplateModalProps> = ({
             <Form.Item
               name="receiveId"
               label="接收者ID"
-              rules={[{ required: true, message: "请输入接收者ID" }]}
+              rules={[{ required: true, message: "请输入至少一个接收者ID" }]}
             >
-              <Input
+              <Select
+                mode="tags"
                 disabled={!isEditing}
-                placeholder="例如: ou_xxx 或 user@example.com"
+                placeholder="输入后回车添加，支持多个"
+                style={{ width: "100%" }}
               />
             </Form.Item>
           </Col>
@@ -273,7 +307,7 @@ const AlertTemplateModal: React.FC<AlertTemplateModalProps> = ({
         </Form.Item>
 
         <Divider orientation="horizontal" plain>
-          模板内容 (YAML)
+          {editorLabel}
         </Divider>
 
         <Row gutter={16}>
@@ -285,7 +319,7 @@ const AlertTemplateModal: React.FC<AlertTemplateModalProps> = ({
             >
               <CodeEditor
                 token={token}
-                language="yaml"
+                language={editorLang}
                 height="450px"
                 readOnly={!isEditing}
               />
@@ -295,7 +329,7 @@ const AlertTemplateModal: React.FC<AlertTemplateModalProps> = ({
             <Form.Item name="aggregationTemplate" label="聚合模板">
               <CodeEditor
                 token={token}
-                language="yaml"
+                language={editorLang}
                 height="450px"
                 readOnly={!isEditing}
               />
