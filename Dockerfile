@@ -22,8 +22,8 @@ FROM registry.cn-beijing.aliyuncs.com/qqlx/nginx:1.28.0-otel
 # 拷贝打包产物
 COPY --from=builder /app/dist /data/html/apiserver/
 
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY alert.conf /etc/nginx/conf.d/alert.conf
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+COPY nginx/conf.d/alert.conf /etc/nginx/conf.d/alert.conf
 
 EXPOSE 80
 

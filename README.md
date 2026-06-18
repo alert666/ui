@@ -1,12 +1,11 @@
- # alert-ui
+﻿ # alert-ui
  
  基于 React 的前端管理界面 — 配合 [api-server](https://github.com/alert666/api-server) 使用，提供告警管理、用户权限、多租户隔离的完整 Web UI。
  
- [![License](https://img.shields.io/github/license/alert666/ui)](https://github.com/alert666/ui/blob/main/LICENSE)
- [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev)
- [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript)](https://www.typescriptlang.org)
- [![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite)](https://vitejs.dev)
- 
+[![Build](https://img.shields.io/github/actions/workflow/status/alert666/api-server/docker-publish.yml?branch=main)](https://github.com/alert666/api-server/actions)
+[![License](https://img.shields.io/github/license/alert666/api-server)](https://github.com/alert666/api-server/blob/main/LICENSE)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/alert666/api-server)](https://go.dev)
+
  ## 目录
  
 - [alert-ui](#alert-ui)
@@ -47,31 +46,31 @@
  - **告警静默** — 按标签匹配创建静默规则，支持定时生效/失效，按租户统计活跃静默数
  - **告警配置** — 查看 Alertmanager 状态与配置
  
- ![告警管理](docs/img/api.png)
+ 
  
  ### 平台管理
  
  - **多租户（集群）管理** — 租户粒度的告警隔离，每个租户对应一个集群
  - **用户管理** — 用户 CRUD，JWT 认证，支持绑定 OAuth2 账号
  
- ![用户管理](docs/img/user.png)
+ 
  
  - **角色管理** — 角色定义与分配
  
- ![角色管理](docs/img/role.png)
+ 
  
  - **接口权限管理** — 基于 Casbin 的 RBAC 细粒度 API 访问控制
  
- ![接口权限管理](docs/img/api.png)
+ 
  
  - **OAuth2 登录** — 支持飞书、Keycloak 等多种 OAuth2 Provider
  
- ![OAuth2 登录](docs/img/oauth2-1.png)
- ![飞书 OAuth2](docs/img/oauth2-feishu.png)
+ 
+ 
  
  - **错误追踪** — 接口发生错误时通过 `requestId` 快速定位后端日志
  
- ![错误追踪](docs/img/error.png)
+ 
  
  ## 技术栈
  
@@ -248,3 +247,4 @@
  ## License
  
  [MIT](LICENSE)
+
