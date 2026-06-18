@@ -1,7 +1,7 @@
-import AlertTemplateDetailComponent from "@/components/alertTemplate/alertTemplateDetial";
 import AlertTemplateModal from "@/components/alertTemplate/EditAlertTemplate";
 import DynamicTable from "@/components/base/DynamicTable";
 import {
+  CopyAlertTemplate,
   CreateAlertTemplate,
   DeleteAlertTemplate,
   GetAlertTemplateList,
@@ -11,12 +11,11 @@ import {
   AlertTemplateListReq,
   AlertTemplateRecord,
   CreateAlertTemplateReq,
-  EditTemplateState,
   TEMPLATE_SEARCH_DIMENSIONS,
 } from "@/types/alert/template";
 import { PageOptionEnum } from "@/types/enum";
 import { useRequest } from "ahooks";
-import { Button, message, theme } from "antd";
+import { Button, Form, Input, message, Modal, theme } from "antd";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import CreateAlertTemplateModal from "@/components/alertTemplate/CreateAlertTemplate";
@@ -55,11 +54,6 @@ function AlertTemplatePage() {
     alertTemplateResult.run(params);
   }, [searchParams]);
 
-  // ------ 查看 alertTemplate内容 ------
-  const [editTemplate, setEditTemplate] = useState<EditTemplateState>(
-    {} as EditTemplateState,
-  );
-
   // ------ 更新告警模板请求 ------
   const alertTemplateUpdateResult = useRequest(UpdateAlertTemplate, {
     manual: true,
@@ -80,8 +74,41 @@ function AlertTemplatePage() {
     manual: true,
     onSuccess: () => {
       message.success("删除成功");
+      alertTemplateResult.refresh();
     },
   });
+
+  // ------ 拷贝 AlertTemplate ------
+  const copyResult = useRequest(CopyAlertTemplate, {
+    manual: true,
+    onSuccess: () => {
+      message.success("拷贝成功");
+      setCopyModalOpen(false);
+      alertTemplateResult.refresh();
+    },
+  });
+  const [copyModalOpen, setCopyModalOpen] = useState(false);
+  const [copyTarget, setCopyTarget] = useState<AlertTemplateRecord | null>(
+    null,
+  );
+  const [copyForm] = Form.useForm();
+
+  const handleCopyClick = (record: AlertTemplateRecord) => {
+    setCopyTarget(record);
+    copyForm.setFieldsValue({ name: (record.name || "") + "-Copy" });
+    setCopyModalOpen(true);
+  };
+
+  const handleCopyOk = async () => {
+    try {
+      const values = await copyForm.validateFields();
+      if (copyTarget) {
+        copyResult.run(copyTarget.id, { name: values.name });
+      }
+    } catch {
+      // validation failed
+    }
+  };
 
   // ------ 新建模版 ------
   const createResult = useRequest(CreateAlertTemplate, {
@@ -107,12 +134,6 @@ function AlertTemplatePage() {
         onClose={HandleCreateClose}
         onSave={HandleCreateSave}
       />
-      <AlertTemplateDetailComponent
-        token={token}
-        editTemplate={editTemplate}
-        setEditTemplate={setEditTemplate}
-        alertTemplateUpdateResult={alertTemplateUpdateResult}
-      />
       <AlertTemplateModal
         width="60%"
         token={token}
@@ -124,6 +145,25 @@ function AlertTemplatePage() {
         record={alertTemplateRecord}
         alertTemplateUpdateResult={alertTemplateUpdateResult}
       />
+
+      <Modal
+        title="拷贝模板"
+        open={copyModalOpen}
+        onOk={handleCopyOk}
+        onCancel={() => setCopyModalOpen(false)}
+        confirmLoading={copyResult.loading}
+        destroyOnHidden
+      >
+        <Form form={copyForm} layout="vertical" style={{ marginTop: 16 }}>
+          <Form.Item
+            name="name"
+            label="新模板名称"
+            rules={[{ required: true, message: "请输入新模板名称" }]}
+          >
+            <Input placeholder="请输入拷贝后的模板名称" />
+          </Form.Item>
+        </Form>
+      </Modal>
 
       <SearchFilter
         dimensions={TEMPLATE_SEARCH_DIMENSIONS}
@@ -143,9 +183,9 @@ function AlertTemplatePage() {
         dataSource={alertTemplateResult.data?.list || []}
         columns={GetAlertTemplateColumns({
           token,
-          setEditTemplate,
           setAlertTemplateRecord,
           alertTemplateDelteResult,
+          onCopyClick: handleCopyClick,
           setAlertTemplateDrawerOpen,
         })}
         pagination={{

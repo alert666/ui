@@ -3,6 +3,7 @@ import {
   Modal,
   Form,
   Input,
+  Select,
   Button,
   Space,
   Divider,
@@ -12,6 +13,8 @@ import {
 } from "antd";
 import { Base64 } from "js-base64";
 import CodeEditor from "../codeEditor/CodeEditor";
+import { useRequest } from "ahooks";
+import { GetAlertChannelList } from "@/services/alertChannel";
 
 // 定义接口
 export interface CreateAlertTemplate {
@@ -19,7 +22,9 @@ export interface CreateAlertTemplate {
   description: string;
   template: string;
   aggregationTemplate: string;
-  alertChannelID?: number;
+  alertChannelID: number;
+  receiveIdType: string;
+  receiveId: string;
 }
 
 interface CreateAlertTemplateModalProps {
@@ -38,6 +43,27 @@ const CreateAlertTemplateModal: React.FC<CreateAlertTemplateModalProps> = ({
   loading,
 }) => {
   const [form] = Form.useForm();
+
+  // 获取告警渠道列表（分页拉取，pageSize 上限 100）
+  const channelListResult = useRequest(
+    async () => {
+      const pageSize = 100;
+      const firstPage = await GetAlertChannelList({ page: 1, pageSize });
+      const total = firstPage.total;
+      const allList = [...firstPage.list];
+
+      if (total > pageSize) {
+        const totalPages = Math.ceil(total / pageSize);
+        for (let p = 2; p <= totalPages; p++) {
+          const page = await GetAlertChannelList({ page: p, pageSize });
+          allList.push(...page.list);
+        }
+      }
+
+      return { ...firstPage, list: allList };
+    },
+    { ready: visible }
+  );
 
   // 每次打开时重置表单
   useEffect(() => {
@@ -110,6 +136,52 @@ const CreateAlertTemplateModal: React.FC<CreateAlertTemplateModalProps> = ({
               rules={[{ required: true, message: "请输入描述" }]}
             >
               <Input placeholder="输入该模板的用途" />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        {/* 渠道和接收者行 */}
+        <Row gutter={16}>
+          <Col span={8}>
+            <Form.Item
+              name="alertChannelID"
+              label="关联告警渠道"
+              rules={[{ required: true, message: "请选择告警渠道" }]}
+            >
+              <Select
+                placeholder="选择告警渠道"
+                loading={channelListResult.loading}
+                options={(channelListResult.data?.list || []).map((ch) => ({
+                  label: ch.name,
+                  value: Number(ch.id),
+                }))}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              name="receiveIdType"
+              label="接收者类型"
+              rules={[{ required: true, message: "请选择接收者类型" }]}
+            >
+              <Select
+                placeholder="选择接收者类型"
+                options={[
+                  { label: "Open ID", value: "open_id" },
+                  { label: "User ID", value: "user_id" },
+                  { label: "Email", value: "email" },
+                  { label: "Chat ID", value: "chat_id" },
+                ]}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              name="receiveId"
+              label="接收者ID"
+              rules={[{ required: true, message: "请输入接收者ID" }]}
+            >
+              <Input placeholder="例如: ou_xxx 或 user@example.com" />
             </Form.Item>
           </Col>
         </Row>

@@ -1,6 +1,4 @@
 import { ChannelType } from "../enum";
-import { AlertTemplateRecord } from "./template";
-
 export interface AlertChannelItem {
   id: string;
   createdAt: string;
@@ -11,7 +9,6 @@ export interface AlertChannelItem {
   aggregationStatus: number;
   config: JSON;
   description: string;
-  alertTemplateID: string;
 }
 
 export interface GetAlertChannelListRequest {
@@ -50,7 +47,6 @@ export interface UpdateAlertChanneRequest {
   aggregationStatus: number;
   config: JSON;
   description: string;
-  templateID: number;
 }
 
 export interface CreateAlertChanneRequest {
@@ -60,9 +56,4 @@ export interface CreateAlertChanneRequest {
   aggregationStatus: number;
   config: JSON;
   description: string;
-}
-
-export interface AlertTemplateView {
-  template: AlertTemplateRecord;
-  open: boolean;
 }

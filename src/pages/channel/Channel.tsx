@@ -7,7 +7,6 @@ import {
 } from "@/services/alertChannel";
 import {
   AlertChannelItem,
-  AlertTemplateView,
   CHANNEL_SEARCH_DIMENSIONS,
   CreateAlertChanneRequest,
   GetAlertChannelListRequest,
@@ -19,10 +18,6 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { App, Button, theme } from "antd";
 import EditAlertChannel from "@/components/alertChannel/Channel";
-import { GetAlertTemplate } from "@/services/alertTemplate";
-import AlertTemplateModal from "@/components/alertTemplate/EditAlertTemplate";
-import { AlertTemplateRecord } from "@/types/alert/template";
-import BindAlertTemplateComponent from "@/components/alertChannel/BindAlertTemplate";
 import { GetAlertChannelColumns } from "@/components/alertChannel/AlertChannelTableColums";
 import SearchFilter from "@/components/base/SearchFilter";
 
@@ -134,52 +129,10 @@ function AlertChannelPage() {
     });
   };
 
-  // ------ 获取 AlertTemplate ------
-  const [alertTemplateView, setAlertTemplateView] = useState<AlertTemplateView>(
-    {} as AlertTemplateView,
-  );
-  const getAlertTemplateResult = useRequest(GetAlertTemplate, {
-    manual: true,
-    onSuccess: (data) => {
-      if (data) {
-        setAlertTemplateView({ open: true, template: data });
-      }
-    },
-  });
 
-  // ------ 绑定模板 ------
-  const [bindAlertTemplateOpen, setBindAlertTemplateOpen] =
-    useState<boolean>(false);
-  const [alertChannelRecord, setAlertChannelRecord] =
-    useState<AlertChannelItem>({} as AlertChannelItem);
-  const onClose = () => {
-    setBindAlertTemplateOpen(false);
-    setAlertChannelRecord({} as AlertChannelItem);
-    alertChannelListRes.refresh();
-  };
 
   return (
     <>
-      <BindAlertTemplateComponent
-        visible={bindAlertTemplateOpen}
-        record={alertChannelRecord}
-        token={token}
-        onCloseCabk={onClose}
-        message={message}
-      />
-      <AlertTemplateModal
-        width="60%"
-        token={token}
-        visible={alertTemplateView.open}
-        onClose={() => {
-          setAlertTemplateView({
-            open: false,
-            template: {} as AlertTemplateRecord,
-          });
-        }}
-        record={alertTemplateView.template}
-        descriptionEdit={true}
-      />
       <EditAlertChannel
         open={editModalOpen}
         data={editingRecord}
@@ -216,9 +169,6 @@ function AlertChannelPage() {
           token,
           handleEdit,
           deleteHander,
-          getAlertTemplateResult,
-          setBindAlertTemplateOpen,
-          setAlertChannelRecord,
         })}
         dataSource={alertChannelListRes.data?.list || []}
         pagination={{

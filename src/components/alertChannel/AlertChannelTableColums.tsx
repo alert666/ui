@@ -10,25 +10,18 @@ import {
 } from "antd";
 import { GlobalToken } from "antd/es/theme/interface";
 import {
-  EyeOutlined,
   EditOutlined,
   DeleteOutlined,
-  LinkOutlined,
   InfoCircleOutlined,
-} from "@ant-design/icons"; // 引入图标
+} from "@ant-design/icons";
 import dayjs from "dayjs";
-import { Result } from "ahooks/lib/useRequest/src/types";
 import { AlertChannelItem } from "@/types/alert/channel";
-import { AlertTemplateRecord } from "@/types/alert/template";
 import { ChannelType } from "@/types/enum";
 
 interface GetAlertChannelColumnsProps {
   token: GlobalToken;
   handleEdit: (record: AlertChannelItem) => void;
   deleteHander: (data: AlertChannelItem) => void;
-  getAlertTemplateResult: Result<AlertTemplateRecord, [id: string]>;
-  setBindAlertTemplateOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setAlertChannelRecord: React.Dispatch<React.SetStateAction<AlertChannelItem>>;
 }
 
 export function GetAlertChannelColumns(
@@ -38,9 +31,6 @@ export function GetAlertChannelColumns(
     token,
     handleEdit,
     deleteHander,
-    getAlertTemplateResult,
-    setBindAlertTemplateOpen,
-    setAlertChannelRecord,
   } = props;
 
   return [
@@ -86,33 +76,7 @@ export function GetAlertChannelColumns(
         />
       ),
     },
-    {
-      title: "模板 ID",
-      dataIndex: "alertTemplateID",
-      width: 130,
-      render: (id: string) => {
-        if (!id || id === "0") return <Tag color="default">未绑定</Tag>;
 
-        const isLoading =
-          getAlertTemplateResult.params?.[0] === id &&
-          getAlertTemplateResult.loading;
-
-        return (
-          <Space size={4}>
-            <Typography.Text code>{id}</Typography.Text>
-            <Tooltip title="预览模板详情">
-              <Button
-                type="text"
-                size="small"
-                loading={isLoading}
-                icon={<EyeOutlined style={{ color: token.colorInfo }} />}
-                onClick={() => getAlertTemplateResult.run(id)}
-              />
-            </Tooltip>
-          </Space>
-        );
-      },
-    },
     {
       title: "聚合开启",
       dataIndex: "aggregationStatus",
@@ -156,17 +120,6 @@ export function GetAlertChannelColumns(
       width: 220,
       render: (_, record: AlertChannelItem) => (
         <Space size={0}>
-          <Button
-            type="link"
-            size="small"
-            icon={<LinkOutlined />}
-            onClick={() => {
-              setAlertChannelRecord(record);
-              setBindAlertTemplateOpen(true);
-            }}
-          >
-            绑定
-          </Button>
           <Button
             type="link"
             size="small"
