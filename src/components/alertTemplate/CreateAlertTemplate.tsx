@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import {
   Modal,
   Form,
@@ -24,7 +24,7 @@ export interface CreateAlertTemplate {
   aggregationTemplate: string;
   alertChannelID: number;
   receiveIdType: string;
-  receiveId: string;
+  receiveId: string[];
 }
 
 interface CreateAlertTemplateModalProps {
@@ -43,6 +43,7 @@ const CreateAlertTemplateModal: React.FC<CreateAlertTemplateModalProps> = ({
   loading,
 }) => {
   const [form] = Form.useForm();
+  const watchedChannelID = Form.useWatch("alertChannelID", form);
 
   // 获取告警渠道列表（分页拉取，pageSize 上限 100）
   const channelListResult = useRequest(
@@ -62,8 +63,21 @@ const CreateAlertTemplateModal: React.FC<CreateAlertTemplateModalProps> = ({
 
       return { ...firstPage, list: allList };
     },
-    { ready: visible }
+    { ready: visible },
   );
+
+  // 根据选中的渠道类型决定模板编辑器语言：email → html，其他 → yaml
+  const editorLang = useMemo(() => {
+    if (!watchedChannelID) return "yaml";
+    const ch = (channelListResult.data?.list || []).find(
+      (c) => Number(c.id) === watchedChannelID,
+    );
+    return ch?.type === "email" ? "html" : "yaml";
+  }, [watchedChannelID, channelListResult.data]);
+
+  // 编辑器区域标题
+  const editorLabel =
+    editorLang === "html" ? "内容配置 (HTML)" : "内容配置 (YAML)";
 
   // 每次打开时重置表单
   useEffect(() => {
@@ -179,9 +193,13 @@ const CreateAlertTemplateModal: React.FC<CreateAlertTemplateModalProps> = ({
             <Form.Item
               name="receiveId"
               label="接收者ID"
-              rules={[{ required: true, message: "请输入接收者ID" }]}
+              rules={[{ required: true, message: "请输入至少一个接收者ID" }]}
             >
-              <Input placeholder="例如: ou_xxx 或 user@example.com" />
+              <Select
+                mode="tags"
+                placeholder="输入后回车添加，支持多个"
+                style={{ width: "100%" }}
+              />
             </Form.Item>
           </Col>
         </Row>
@@ -191,7 +209,7 @@ const CreateAlertTemplateModal: React.FC<CreateAlertTemplateModalProps> = ({
           plain
           style={{ fontSize: "12px", color: "#999" }}
         >
-          内容配置 (YAML)
+          {editorLabel}
         </Divider>
 
         {/* 模板编辑区域 */}
@@ -202,7 +220,7 @@ const CreateAlertTemplateModal: React.FC<CreateAlertTemplateModalProps> = ({
               label="普通模板"
               rules={[{ required: true, message: "普通模板内容不能为空" }]}
             >
-              <CodeEditor token={token} language="yaml" height="450px" />
+              <CodeEditor token={token} language={editorLang} height="450px" />
             </Form.Item>
           </Col>
           <Col span={12}>
@@ -211,7 +229,7 @@ const CreateAlertTemplateModal: React.FC<CreateAlertTemplateModalProps> = ({
               label="聚合模板"
               initialValue="" // 给个默认空字符串
             >
-              <CodeEditor token={token} language="yaml" height="450px" />
+              <CodeEditor token={token} language={editorLang} height="450px" />
             </Form.Item>
           </Col>
         </Row>

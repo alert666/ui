@@ -9,7 +9,7 @@ export interface AlertTemplateUpdateReq {
   aggregationTemplate?: string;
   description?: string;
   receiveIdType?: string;
-  receiveId?: string;
+  receiveId?: string[];
   alertChannelID?: number;
 }
 
@@ -45,7 +45,7 @@ export interface CreateAlertTemplateReq {
   aggregationTemplate: string;
   alertChannelID: number;
   receiveIdType: string;
-  receiveId: string;
+  receiveId: string[];
 }
 
 export const TEMPLATE_SEARCH_DIMENSIONS = [

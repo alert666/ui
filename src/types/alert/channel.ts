@@ -14,7 +14,7 @@ export interface AlertChannelItem {
 export interface GetAlertChannelListRequest {
   page: number;
   pageSize: number;
-  type?: "feishuApp" | "feishuBoot" | "webhook" | undefined;
+  type?: "feishuApp" | "feishuBoot" | "webhook" | "email" | undefined;
   name?: string | undefined;
 }
 
@@ -35,6 +35,7 @@ export const CHANNEL_SEARCH_DIMENSIONS = [
       { label: "飞书应用", value: ChannelType.FEI_SHU_APP },
       { label: "飞书机器人", value: ChannelType.FEI_SHU_BOOT },
       { label: "webhook", value: ChannelType.WEB_HOOK },
+      { label: "邮件", value: ChannelType.EMAIL },
     ],
   },
 ];
