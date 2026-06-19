@@ -187,7 +187,7 @@ export default function AppHeader({
   };
 
   const borderColor = isDark ? "#303030" : "#f0f0f0";
-  const SIDER_WIDTH = 240;
+  const SIDER_WIDTH = 180;
 
   return (
     <div
@@ -200,7 +200,7 @@ export default function AppHeader({
       <div className="flex items-center">
         <div
           style={{
-            width: SIDER_WIDTH - 16,
+            width: SIDER_WIDTH,
             display: "flex",
             justifyContent: "center",
           }}

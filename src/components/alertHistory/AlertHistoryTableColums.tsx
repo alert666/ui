@@ -58,19 +58,20 @@ export function GetAlertHistorycolumns(
         </Typography.Text>
       ),
     },
-    // {
-    //   title: "告警指纹",
-    //   dataIndex: "fingerprint",
-    //   width: 100,
-    //   responsive: ["md"],
-    // },
     {
-      title: "租户",
-      dataIndex: "cluster",
+      title: "告警指纹",
+      dataIndex: "fingerprint",
       width: 100,
-      responsive: ["sm"], // 平板及以上显示
+      responsive: ["md"],
       sorter: (a, b) => a.cluster.localeCompare(b.cluster),
     },
+    // {
+    //   title: "租户",
+    //   dataIndex: "cluster",
+    //   width: 100,
+    //   responsive: ["sm"], // 平板及以上显示
+    //   sorter: (a, b) => a.cluster.localeCompare(b.cluster),
+    // },
     {
       title: "开始时间",
       dataIndex: "startsAt",

@@ -63,6 +63,10 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
     const newParams = new URLSearchParams();
     newParams.set("page", "1");
     newParams.set("pageSize", searchParams.get("pageSize") || "10");
+    newParams.set(
+      "tenant",
+      searchParams.get("tenant") || localStorage.getItem("tenant") || "",
+    );
     setSearchParams(newParams);
   };
 
@@ -161,7 +165,9 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
               onClick={() => form.submit()}
               icon={<SearchOutlined />}
             />
-            <Button onClick={handleReset}>重置</Button>
+            <Button type="dashed" onClick={handleReset}>
+              重置
+            </Button>
             {onRefresh && (
               <Button
                 icon={<SyncOutlined />}
