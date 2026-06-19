@@ -164,7 +164,6 @@ export default function EditUserComponent(props: EditUserProps) {
                 <Form.Item
                   name="nickName"
                   label="昵称"
-                  rules={[{ required: true }]}
                 >
                   <Input />
                 </Form.Item>
@@ -184,12 +183,11 @@ export default function EditUserComponent(props: EditUserProps) {
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item label="头像" required>
+                <Form.Item label="头像">
                   <Space.Compact style={{ width: "100%" }}>
                     <Form.Item
                       name="avatar"
                       noStyle
-                      rules={[{ required: true, message: "请输入头像地址" }]}
                     >
                       <Input placeholder="输入头像 URL" allowClear />
                     </Form.Item>

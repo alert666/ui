@@ -1,4 +1,18 @@
-﻿import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
+import React from "react";
+import {
+  ApartmentOutlined,
+  AuditOutlined,
+  ApiOutlined,
+  BellOutlined,
+  FileTextOutlined,
+  HistoryOutlined,
+  MutedOutlined,
+  NodeIndexOutlined,
+  SettingOutlined,
+  TeamOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
 import { MenuProps } from "antd";
 import Root from "./pages/Root";
 import RolePage from "./pages/role/Role";
@@ -98,26 +112,29 @@ const router = createBrowserRouter([
 const commonMenuItem: MenuItem[] = [
   {
     key: "tenant",
+    icon: React.createElement(ApartmentOutlined),
     label: "租户",
   },
   {
     key: "ram",
+    icon: React.createElement(TeamOutlined),
     label: "用户",
     children: [
-      { key: "user", label: "用户列表" },
-      { key: "role", label: "角色列表" },
-      { key: "api", label: "API列表" },
+      { key: "user", icon: React.createElement(UserOutlined), label: "用户列表" },
+      { key: "role", icon: React.createElement(AuditOutlined), label: "角色列表" },
+      { key: "api", icon: React.createElement(ApiOutlined), label: "API列表" },
     ],
   },
   {
     key: "alert",
+    icon: React.createElement(BellOutlined),
     label: "告警",
     children: [
-      { key: "history", label: "告警历史" },
-      { key: "channel", label: "告警通道" },
-      { key: "template", label: "告警模版" },
-      { key: "silence", label: "告警静默" },
-      { key: "alertmanager", label: "告警配置" },
+      { key: "history", icon: React.createElement(HistoryOutlined), label: "告警历史" },
+      { key: "channel", icon: React.createElement(NodeIndexOutlined), label: "告警通道" },
+      { key: "template", icon: React.createElement(FileTextOutlined), label: "告警模版" },
+      { key: "silence", icon: React.createElement(MutedOutlined), label: "告警静默" },
+      { key: "alertmanager", icon: React.createElement(SettingOutlined), label: "告警配置" },
     ],
   },
 ];

@@ -6,6 +6,7 @@ import {
   GlobalToken,
   Popconfirm,
   Space,
+  Tag,
   Tooltip,
   Typography,
 } from "antd";
@@ -44,6 +45,7 @@ export const GetAlertTemplateColumns = (
       dataIndex: "id",
       key: "id",
       width: 70,
+      maxWidth: 70,
     },
     {
       title: "模板名称",
@@ -61,6 +63,7 @@ export const GetAlertTemplateColumns = (
       dataIndex: "description",
       key: "description",
       ellipsis: true,
+      responsive: ["lg"],
       render: (text: string) => (
         <Tooltip title={text}>
           <div style={ellipsisStyle}>{text || "-"}</div>
@@ -72,6 +75,7 @@ export const GetAlertTemplateColumns = (
       dataIndex: "alertChannel",
       key: "alertChannelID",
       ellipsis: true,
+      responsive: ["md"] as Array<"md">,
       render: (_: unknown, record: AlertTemplateRecord) => {
         const name =
           record.alertChannel?.name || String(record.alertChannelID) || "-";
@@ -83,54 +87,63 @@ export const GetAlertTemplateColumns = (
       },
     },
     {
-      title: "接收者类型",
-      dataIndex: "receiveIdType",
-      key: "receiveIdType",
-      width: 110,
-      render: (text: string) => {
-        const labels: Record<string, string> = {
-          open_id: "Open ID",
-          user_id: "User ID",
-          email: "Email",
-          chat_id: "Chat ID",
+      title: "接收者",
+      key: "receiver",
+      width: "40%",
+      render: (_: unknown, record: AlertTemplateRecord) => {
+        const typeConfig: Record<string, { color: string; label: string }> = {
+          open_id: { color: "cyan", label: "Open ID" },
+          user_id: { color: "purple", label: "User ID" },
+          email: { color: "green", label: "Email" },
+          chat_id: { color: "orange", label: "Chat ID" },
         };
-        return labels[text] || text || "-";
-      },
-    },
-    {
-      title: "接收者ID",
-      dataIndex: "receiveId",
-      key: "receiveId",
-      render: (text: string) => {
-        if (!text) return "-";
-        let ids: string[] = [];
+
+        if (!record.receiveId) return "-";
+        let ids = [];
         try {
-          const parsed = JSON.parse(text);
+          const parsed = JSON.parse(record.receiveId);
           ids = Array.isArray(parsed) ? parsed : [];
         } catch {
           ids = [];
         }
         if (ids.length === 0) return "-";
+
+        const cfg = typeConfig[record.receiveIdType];
+        const color = cfg?.color || "default";
+        const label = cfg?.label || record.receiveIdType || "-";
+
+        const text = ids.join(", ");
         return (
-          <Space size={4} wrap>
-            {ids.map((id, i) => (
-              <Tooltip key={i} title={id}>
-                <Typography.Text
-                  code
-                  style={{
-                    fontSize: 11,
-                    maxWidth: 160,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    display: "inline-block",
-                  }}
-                >
-                  {id}
-                </Typography.Text>
-              </Tooltip>
-            ))}
-          </Space>
+          <Tooltip title={`${label}: ${text}`}>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                maxWidth: "100%",
+                overflow: "hidden",
+              }}
+            >
+              <Tag
+                color={color}
+                style={{
+                  margin: 0,
+                  flexShrink: 0,
+                  fontWeight: 500,
+                  lineHeight: "18px",
+                  fontSize: 12,
+                }}
+              >
+                {label}
+              </Tag>
+              <Typography.Text
+                ellipsis
+                style={{ fontSize: 13, flex: 1, minWidth: 0 }}
+              >
+                {text}
+              </Typography.Text>
+            </div>
+          </Tooltip>
         );
       },
     },
@@ -138,14 +151,9 @@ export const GetAlertTemplateColumns = (
       title: "创建时间",
       dataIndex: "createdAt",
       key: "createdAt",
+      responsive: ["md"] as Array<"md">,
       render: (text: string) => dayjs(text).format("YYYY-MM-DD HH:mm:ss"),
     },
-    // {
-    //   title: "更新时间",
-    //   dataIndex: "updatedAt",
-    //   key: "updatedAt",
-    //   render: (text: string) => dayjs(text).format("YYYY-MM-DD HH:mm:ss"),
-    // },
     {
       title: "操作",
       key: "action",

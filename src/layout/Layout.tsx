@@ -1,4 +1,4 @@
-﻿import { Layout, Menu, Spin, theme } from "antd";
+import { Layout, Menu, Spin, theme } from "antd";
 import { Content } from "antd/es/layout/layout";
 import Sider from "antd/es/layout/Sider";
 import { useEffect, useMemo, useState, useCallback } from "react";
@@ -20,6 +20,7 @@ import { FiringCountByTenantResponse } from "@/types/alert/history";
 interface MenuClickParams {
   key: string;
   keyPath: string[];
+  domEvent: React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>;
 }
 
 const PREFIX = "/workspace/";
@@ -111,6 +112,26 @@ const LayoutPage = () => {
     };
   }, [location.pathname]);
 
+  // ------ 修改 html 的 Title ------
+  useEffect(() => {
+    const pathParts = location.pathname.split("/");
+    const pageKey = pathParts[pathParts.length - 1];
+    const pageTitle = PAGE_TITLES[pageKey];
+    document.title = pageTitle ? `${pageTitle} - Alertmanager` : "Alertmanager";
+  }, [location.pathname]);
+
+  const PAGE_TITLES: Record<string, string> = {
+    tenant: "租户管理",
+    user: "用户列表",
+    role: "角色列表",
+    api: "API列表",
+    history: "告警历史",
+    channel: "告警通道",
+    template: "告警模版",
+    silence: "告警静默",
+    alertmanager: "告警配置",
+  };
+
   const [manualOpenKeys, setManualOpenKeys] = useState<string[]>([]);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -120,10 +141,15 @@ const LayoutPage = () => {
     }
   }, [menuState.openKeys]);
 
-  const menuClick = ({ keyPath }: MenuClickParams) => {
+  const menuClick = ({ keyPath, domEvent }: MenuClickParams) => {
     const pathName = PREFIX + [...keyPath].reverse().join("/");
     const tenant = searchParams.get("tenant");
-    navigate(`${pathName}${tenant ? `?tenant=${tenant}` : ""}`);
+    const url = `${pathName}${tenant ? `?tenant=${tenant}` : ""}`;
+    if (domEvent.ctrlKey || domEvent.metaKey) {
+      window.open(url, "_blank");
+    } else {
+      navigate(url);
+    }
   };
 
   const menuItems = useMemo(
@@ -190,4 +216,3 @@ const LayoutPage = () => {
 };
 
 export default LayoutPage;
-

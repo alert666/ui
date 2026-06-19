@@ -1,4 +1,4 @@
-import { ListReq } from "..";
+﻿import { ListReq } from "..";
 
 export interface AlertSilenceListReq extends ListReq {
   status?: 0 | 1 | 2;
@@ -56,6 +56,16 @@ export interface Matcher {
 }
 
 export const SILEMCE_SEARCH_DIMENSIONS = [
+  {
+    label: "状态",
+    value: "status",
+    type: "select",
+    options: [
+      { label: "启用", value: "1" },
+      { label: "禁用", value: "0" },
+      { label: "过期", value: "2" },
+    ],
+  },
   {
     label: "创建人",
     value: "createdBy",
