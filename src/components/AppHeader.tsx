@@ -1,16 +1,6 @@
-import { useContext, useMemo } from "react";
+import { useContext, useMemo, useState } from "react";
 import { GlobalContext } from "@/components/ThemeProvider";
-import {
-  Avatar,
-  Button,
-  Dropdown,
-  Space,
-  Divider,
-  Typography,
-  Select,
-  Tag,
-  Badge,
-} from "antd";
+import { Avatar, Button, Dropdown, Space, Divider, Select, Badge } from "antd";
 import {
   MailOutlined,
   UserOutlined,
@@ -23,6 +13,7 @@ import { UserLogout } from "@/services/user";
 import { useRequest } from "ahooks";
 import { UserInfoResponse } from "@/types/user/user";
 import Logo from "@/assets/logo.png";
+import UserProfileDrawer from "@/components/user/UserProfileDrawer";
 import type { DefaultOptionType } from "antd/es/select";
 
 interface CustomTenantOption extends DefaultOptionType {
@@ -62,6 +53,8 @@ export default function AppHeader({
   onTenantChange,
 }: AppHeaderProps) {
   const { theme } = useContext(GlobalContext);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const location = useLocation();
   const isDark = theme === "dark";
 
@@ -99,8 +92,6 @@ export default function AppHeader({
     const menuBg = isDark ? "#23232a" : "#fff";
     const menuFont = isDark ? "#fff" : "#222";
     const menuBorder = isDark ? "#303030" : "#e5e7eb";
-    const roleBg = isDark ? "#243a5a" : "#e3f2fd";
-    const roleColor = isDark ? "#90caf9" : "#1976d2";
 
     return (
       <div
@@ -111,41 +102,14 @@ export default function AppHeader({
           border: `1px solid ${menuBorder}`,
         }}
       >
-        <div
-          className="p-4"
-          style={{
-            background: isDark
-              ? "linear-gradient(135deg, #23232a 0%, #243a5a 100%)"
-              : "linear-gradient(135deg, #e3f2fd 0%, #fff 100%)",
-          }}
-        >
-          <div className="flex items-start gap-4">
-            <Avatar size={64} src={userData?.avatar} icon={<UserOutlined />} />
-            <div className="flex-1">
-              <Typography.Title
-                level={5}
-                className="!mb-1"
-                style={{ color: isDark ? "#fff" : "#1976d2", marginTop: 0 }}
-              >
+        <div className="p-5">
+          <div className="flex items-start gap-3">
+            <Avatar size={48} src={userData?.avatar} icon={<UserOutlined />} />
+            {/* <div className="flex-1 min-w-0 pt-0.5">
+              <div className="text-sm font-semibold truncate">
                 {userData?.nickName || userData?.name || "未知用户"}
-              </Typography.Title>
-              <div className="flex flex-wrap gap-2">
-                {userData?.roles?.map((role) => (
-                  <Tag
-                    key={role.name}
-                    variant="filled"
-                    style={{
-                      background: roleBg,
-                      color: roleColor,
-                      borderRadius: "10px",
-                      fontSize: "11px",
-                    }}
-                  >
-                    {role.name}
-                  </Tag>
-                ))}
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -168,7 +132,10 @@ export default function AppHeader({
           <Button
             type="text"
             className="flex-1 text-sm"
-            onClick={() => window.open("/user/info", "_blank")}
+            onClick={() => {
+              setDropdownOpen(false);
+              setDrawerOpen(true);
+            }}
           >
             个人信息
           </Button>
@@ -190,103 +157,114 @@ export default function AppHeader({
   const SIDER_WIDTH = 180;
 
   return (
-    <div
-      className="flex items-center justify-between px-4 h-16 transition-all"
-      style={{
-        backgroundColor: isDark ? background || "#18181c" : "#fff",
-        borderBottom: `1px solid ${borderColor}`,
-      }}
-    >
-      <div className="flex items-center">
-        <div
-          style={{
-            width: SIDER_WIDTH,
-            display: "flex",
-            justifyContent: "center",
-          }}
-        >
-          <img src={Logo} style={{ width: 130 }} alt="Logo" />
+    <>
+      <div
+        className="flex items-center justify-between px-4 h-16 transition-all"
+        style={{
+          backgroundColor: isDark ? background || "#18181c" : "#fff",
+          borderBottom: `1px solid ${borderColor}`,
+        }}
+      >
+        <div className="flex items-center">
+          <div
+            style={{
+              width: SIDER_WIDTH,
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <img src={Logo} style={{ width: 130 }} alt="Logo" />
+          </div>
+
+          {isTenantVisible && (
+            <>
+              <div className="h-6 w-[1px] bg-gray-300 dark:bg-gray-700 mx-2" />
+              <div className="flex pl-4 items-center gap-1 ml-2 text-gray-400">
+                <ApartmentOutlined style={{ fontSize: 16 }} />
+                <span style={{ fontSize: 14, userSelect: "none" }}>
+                  当前租户
+                </span>
+              </div>
+              <Select
+                variant="borderless"
+                showSearch={{
+                  filterOption: (input, option) => {
+                    const label = (option?.label ?? "")
+                      .toString()
+                      .toLowerCase();
+                    const value = (option?.value ?? "")
+                      .toString()
+                      .toLowerCase();
+                    const search = input.toLowerCase();
+                    return label.includes(search) || value.includes(search);
+                  },
+                }}
+                loading={tenantLoading}
+                value={currentTenant ?? ""}
+                onChange={onTenantChange}
+                options={options}
+                className="min-w-[160px] font-medium px-2"
+                popupStyle={{ borderRadius: 8, width: 240 }}
+                optionRender={(option) => {
+                  const data = option.data as CustomTenantOption;
+                  const isGlobal = data.value === "";
+
+                  return (
+                    <div className="flex justify-between items-center w-full py-0.5">
+                      <span
+                        className="truncate mr-2"
+                        style={{ maxWidth: "160px" }}
+                      >
+                        {data.label}
+                      </span>
+
+                      {data.count > 0 && (
+                        <Badge
+                          count={data.count}
+                          overflowCount={99}
+                          color={isGlobal ? "#1890ff" : "#ff4d4f"}
+                          style={{
+                            fontSize: "11px",
+                            height: "18px",
+                            lineHeight: "18px",
+                            minWidth: "18px",
+                            padding: "0 5px",
+                          }}
+                        />
+                      )}
+                    </div>
+                  );
+                }}
+              />
+            </>
+          )}
         </div>
 
-        {isTenantVisible && (
-          <>
-            <div className="h-6 w-[1px] bg-gray-300 dark:bg-gray-700 mx-2" />
-            <div className="flex pl-4 items-center gap-1 ml-2 text-gray-400">
-              <ApartmentOutlined style={{ fontSize: 16 }} />
-              <span style={{ fontSize: 14, userSelect: "none" }}>当前租户</span>
-            </div>
-            <Select
-              variant="borderless"
-              showSearch={{
-                filterOption: (input, option) => {
-                  const label = (option?.label ?? "").toString().toLowerCase();
-                  const value = (option?.value ?? "").toString().toLowerCase();
-                  const search = input.toLowerCase();
-                  return label.includes(search) || value.includes(search);
-                },
-              }}
-              loading={tenantLoading}
-              value={currentTenant ?? ""}
-              onChange={onTenantChange}
-              options={options}
-              className="min-w-[160px] font-medium px-2"
-              popupStyle={{ borderRadius: 8, width: 240 }}
-              optionRender={(option) => {
-                const data = option.data as CustomTenantOption;
-                const isGlobal = data.value === "";
-
-                return (
-                  <div className="flex justify-between items-center w-full py-0.5">
-                    <span
-                      className="truncate mr-2"
-                      style={{ maxWidth: "160px" }}
-                    >
-                      {data.label}
-                    </span>
-
-                    {data.count > 0 && (
-                      <Badge
-                        count={data.count}
-                        overflowCount={99}
-                        color={isGlobal ? "#1890ff" : "#ff4d4f"}
-                        style={{
-                          fontSize: "11px",
-                          height: "18px",
-                          lineHeight: "18px",
-                          minWidth: "18px",
-                          padding: "0 5px",
-                        }}
-                      />
-                    )}
-                  </div>
-                );
-              }}
-            />
-          </>
-        )}
+        <Space size={16} style={{ marginLeft: 30 }}>
+          <ThemeToggle />
+          {!userLoad && (
+            <Dropdown
+              open={dropdownOpen}
+              onOpenChange={setDropdownOpen}
+              popupRender={dropdownContent}
+              trigger={["click"]}
+              placement="bottomRight"
+            >
+              <div className="flex items-center gap-2 cursor-pointer p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5">
+                <Avatar
+                  src={userData?.avatar}
+                  icon={<UserOutlined />}
+                  style={{ background: isDark ? "#333" : "#1677ff" }}
+                />
+              </div>
+            </Dropdown>
+          )}
+        </Space>
       </div>
-
-      <Space size={16}>
-        <ThemeToggle />
-        {!userLoad && (
-          <Dropdown
-            popupRender={dropdownContent}
-            trigger={["click"]}
-            placement="bottomRight"
-          >
-            <div className="flex items-center gap-2 cursor-pointer p-1 rounded-full px-3 hover:bg-black/5 dark:hover:bg-white/5">
-              <span className="text-sm font-medium">
-                {userData?.nickName || userData?.name}
-              </span>
-              <Avatar
-                src={userData?.avatar}
-                icon={<UserOutlined />}
-                style={{ background: isDark ? "#333" : "#1677ff" }}
-              />
-            </div>
-          </Dropdown>
-        )}
-      </Space>
-    </div>
+      <UserProfileDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+      />
+    </>
   );
 }

@@ -39,6 +39,7 @@ export default function UpdatePasswordPage() {
         if (data.token !== "" && data.user.status === UserStatus.Active) {
           setUser(data.user);
           localStorage.setItem("token", data.token);
+          localStorage.setItem("refreshToken", data.refreshToken);
           navigate("/workspace");
         }
         setupdateUser(true);
@@ -55,6 +56,7 @@ export default function UpdatePasswordPage() {
           if (data.token !== "" && data.user.status === UserStatus.Active) {
             setupdateUser(false);
             localStorage.setItem("token", data.token);
+            localStorage.setItem("refreshToken", data.refreshToken);
             setUser(data.user);
             navigate("/workspace");
           }

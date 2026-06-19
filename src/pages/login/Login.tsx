@@ -17,7 +17,8 @@ const LoginPage = () => {
   const { run: loginRun, loading: loginLoading } = useRequest(UserLogin, {
     manual: true,
     onSuccess: (res) => {
-      localStorage.setItem("token", res?.token);
+      localStorage.setItem("token", res.token);
+      localStorage.setItem("refreshToken", res.refreshToken);
       navigate(from ? decodeURIComponent(from) : "/", { replace: true });
     },
     onError: (error: Error) => {
