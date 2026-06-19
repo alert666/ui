@@ -63,7 +63,7 @@ export const GetAlertTemplateColumns = (
       dataIndex: "description",
       key: "description",
       ellipsis: true,
-      responsive: ["lg"],
+      responsive: ["lg"] as Array<"lg">,
       render: (text: string) => (
         <Tooltip title={text}>
           <div style={ellipsisStyle}>{text || "-"}</div>
