@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+﻿import { useEffect, useState, useMemo } from "react";
 import {
   Form,
   Input,
@@ -437,19 +437,6 @@ const AlertHistoryPage = () => {
                   placeholder="结束时间"
                 />
               </Form.Item>
-            </div>
-
-            {/* 右侧：操作按钮组 */}
-            <div className="flex items-center gap-2 ml-auto">
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => form.submit()}
-                style={{ paddingInline: 20, fontWeight: 500 }}
-              >
-                查询
-              </Button>
-
               <Button
                 icon={<FireOutlined />}
                 onClick={handleReset}
@@ -460,6 +447,15 @@ const AlertHistoryPage = () => {
                 }}
               >
                 Firing告警
+              </Button>
+
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => form.submit()}
+                style={{ paddingInline: 20, fontWeight: 500 }}
+              >
+                查询
               </Button>
 
               <Tooltip title="刷新数据">
@@ -479,6 +475,7 @@ const AlertHistoryPage = () => {
                 />
               </Tooltip>
             </div>
+
           </div>
         </Form>
 

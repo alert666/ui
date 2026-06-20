@@ -18,7 +18,7 @@ import { HookAPI } from "antd/es/modal/useModal";
 import { useEffect, useState } from "react";
 import { ListRole } from "@/services/role";
 import TransferComponent from "../base/Transfer";
-import { Rolecolumns } from "@/types/user/user.tsx";
+import { Rolecolumns } from "@/components/user/User";
 interface EditUserProps {
   callback: () => void;
   modal: HookAPI;
@@ -161,10 +161,7 @@ export default function EditUserComponent(props: EditUserProps) {
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item
-                  name="nickName"
-                  label="昵称"
-                >
+                <Form.Item name="nickName" label="昵称">
                   <Input />
                 </Form.Item>
               </Col>
@@ -185,10 +182,7 @@ export default function EditUserComponent(props: EditUserProps) {
               <Col span={12}>
                 <Form.Item label="头像">
                   <Space.Compact style={{ width: "100%" }}>
-                    <Form.Item
-                      name="avatar"
-                      noStyle
-                    >
+                    <Form.Item name="avatar" noStyle>
                       <Input placeholder="输入头像 URL" allowClear />
                     </Form.Item>
                     <Button

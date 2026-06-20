@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+﻿import React, { useMemo } from "react";
 import {
   Form,
   Input,
@@ -24,7 +24,8 @@ interface SearchFilterProps {
   searchParams: URLSearchParams;
   setSearchParams: (params: URLSearchParams) => void;
   onRefresh?: () => void;
-  extra?: React.ReactNode; // 用于放置“新建”按钮
+  extra?: React.ReactNode;
+  preserveDimensions?: boolean; // 用于放置“新建”按钮
   initialValues?: Record<string, unknown>;
 }
 
@@ -34,6 +35,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
   setSearchParams,
   onRefresh,
   extra,
+  preserveDimensions,
 }) => {
   const { token } = theme.useToken();
   const [form] = Form.useForm();
@@ -46,10 +48,16 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 
     newParams.set("page", "1");
 
-    dimensions.forEach((dim) => newParams.delete(dim.value));
+    if (preserveDimensions && !searchValue?.trim()) return;
+
+    if (!preserveDimensions) {
+      dimensions.forEach((dim) => newParams.delete(dim.value));
+    }
 
     if (searchValue?.trim()) {
       newParams.set(searchKey, searchValue.trim());
+    } else {
+      newParams.delete(searchKey);
     }
 
     setSearchParams(newParams);

@@ -20,7 +20,7 @@ import DynamicTable from "@/components/base/DynamicTable";
 import CreateUserModal from "@/components/user/CreateUserModal";
 import EditUserComponent from "@/components/user/EditUser";
 import { UserDelete, UserList, UserUpdateByAdmin } from "@/services/user";
-import { GetUserColumn } from "@/types/user/user.tsx";
+import { GetUserColumn } from "@/components/user/User";
 import type { userListRequest, UserListResponseItem } from "@/types/user/user";
 import { PageOptionEnum } from "@/types/enum";
 // 1. 定义表单值的接口
@@ -286,7 +286,6 @@ const UserPage = () => {
           showSizeChanger: true,
           showTotal: (t) => `共 ${t} 条数据`,
         }}
-
       />
 
       <CreateUserModal
