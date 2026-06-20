@@ -1,4 +1,5 @@
 import {
+  Avatar,
   Button,
   Divider,
   Space,
@@ -17,6 +18,7 @@ import {
   KeyOutlined,
   MailOutlined,
   MobileOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 
 interface GetUserColumnProps {
@@ -53,91 +55,102 @@ export function GetUserColumn(
 
   return [
     {
-      title: "ID",
-      dataIndex: "id",
-      width: 60,
-      responsive: ["md"], // 中等屏幕(768px)及以上显示
-      render: (id: string) => (
-        <Text type="secondary" style={{ fontSize: "12px" }}>
-          {id}
-        </Text>
-      ),
-    },
-    {
       title: "用户信息",
       dataIndex: "name",
       key: "userInfo",
+      ellipsis: true,
+      width: "20%",
       render: (_: string, record: UserListResponseItem) => (
-        <div
-          style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}
-        >
-          <Text strong>{record.name}</Text>
-          <Text type="secondary" style={{ fontSize: "12px", marginTop: 2 }}>
-            {record.nickName || "—"}
-          </Text>
+        <div className="flex items-center gap-3">
+          <Avatar
+            src={record.avatar}
+            size={36}
+            icon={<UserOutlined />}
+            style={{ flexShrink: 0 }}
+          >
+            {record.name?.charAt(0)}
+          </Avatar>
+          <div className="flex flex-col min-w-0">
+            <Text strong ellipsis>
+              {record.name}
+            </Text>
+            {record.email && (
+              <Text
+                type="secondary"
+                style={{ fontSize: "12px" }}
+                ellipsis
+                copyable={{ text: record.email }}
+              >
+                <MailOutlined style={{ marginRight: 4, opacity: 0.6 }} />
+                {record.email}
+              </Text>
+            )}
+          </div>
         </div>
       ),
     },
     {
-      title: "部门",
-      dataIndex: "department",
-      width: 100,
-      responsive: ["lg"], // 大屏幕(992px)及以上显示
-      render: (dept: string) => (
-        <Tag color="blue" style={{ border: "none" }}>
-          {dept || "通用"}
-        </Tag>
-      ),
+      title: "昵称",
+      dataIndex: "nickName",
+      width: "10%",
+      ellipsis: true,
+      responsive: ["lg"],
+      render: (nick: string) =>
+        nick ? <Text>{nick}</Text> : <Text type="secondary">-</Text>,
     },
     {
-      title: "联系方式",
-      dataIndex: "email",
-      width: 220,
-      responsive: ["sm"], // 平板及以上显示
-      render: (email: string, record: UserListResponseItem) => (
-        <Space orientation="vertical" size={0} style={{ gap: "2px" }}>
-          {email ? (
-            <Text
-              copyable={{ text: email, tooltips: ["点击复制", "复制成功"] }}
-              style={{ fontSize: "13px" }}
-            >
-              <MailOutlined style={{ marginRight: 4, opacity: 0.6 }} />
-              {email}
-            </Text>
-          ) : (
-            <Text type="secondary">—</Text>
-          )}
-          {record.mobile && (
-            <Text type="secondary" style={{ fontSize: "12px" }}>
+      title: "部门",
+      dataIndex: "department",
+      width: "10%",
+      ellipsis: true,
+      responsive: ["lg"],
+      render: (dept: string) =>
+        dept ? <Tag color="blue">{dept}</Tag> : <Text type="secondary">-</Text>,
+    },
+    {
+      title: "手机",
+      dataIndex: "mobile",
+      width: "10%",
+      ellipsis: true,
+      responsive: ["md"],
+      render: (mobile: string) =>
+        mobile ? (
+          <Tooltip title={mobile}>
+            <Text copyable={{ text: mobile }}>
               <MobileOutlined style={{ marginRight: 4, opacity: 0.6 }} />
-              {record.mobile}
+              {mobile}
             </Text>
-          )}
-        </Space>
-      ),
+          </Tooltip>
+        ) : (
+          <Text type="secondary">-</Text>
+        ),
     },
     {
       title: "状态",
       dataIndex: "status",
-      width: "100px",
+      width: "5%",
       align: "center",
       render: (status: number, record: UserListResponseItem) => {
         const isAdmin = record.id === "1" || record.name === "admin";
         return (
-          <Tooltip title={isAdmin ? "系统核心账号不可禁用" : ""}>
-            <div onClick={(e) => e.stopPropagation()}>
-              <Switch
-                checked={status === 1}
-                checkedChildren="开"
-                unCheckedChildren="关"
-                size="small"
-                loading={updateUserLoad}
-                disabled={isAdmin}
-                onChange={(checked) => {
-                  updateUserRun({ id: record.id, status: checked ? 1 : 2 });
-                }}
-              />
-            </div>
+          <Tooltip
+            title={
+              isAdmin
+                ? "系统核心账号不可禁用"
+                : status === 1
+                  ? "点击禁用"
+                  : "点击启用"
+            }
+          >
+            <Switch
+              checked={status === 1}
+              size="small"
+              loading={updateUserLoad}
+              disabled={isAdmin}
+              onChange={(checked) => {
+                updateUserRun({ id: record.id, status: checked ? 1 : 2 });
+              }}
+            />
           </Tooltip>
         );
       },
@@ -150,7 +163,7 @@ export function GetUserColumn(
       render: (_: string, record: UserListResponseItem) => {
         const isAdmin = record.id === "1" || record.name === "admin";
         return (
-          <Space separator={<Divider orientation="vertical" />} size={0}>
+          <Space size={0} separator={<Divider orientation="vertical" />}>
             <Button
               type="link"
               size="small"

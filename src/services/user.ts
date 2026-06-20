@@ -18,7 +18,14 @@ export function UserInfo(): Promise<UserInfoResponse> {
 }
 
 export function UserLogout(): Promise<ApiResponse> {
-  return post<ApiResponse>("/api/v1/user/logout", "");
+  const refreshToken = localStorage.getItem("refreshToken") || "";
+  return post<ApiResponse>("/api/v1/user/logout", { refreshToken });
+}
+
+export function RefreshToken(
+  refreshToken: string,
+): Promise<userLoginResponse> {
+  return post<userLoginResponse>("/api/v1/user/refresh", { refreshToken });
 }
 
 // 获取用户列表

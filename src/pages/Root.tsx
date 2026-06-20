@@ -4,7 +4,7 @@ function Root() {
   const location = useLocation();
 
   const token = localStorage.getItem("token");
-  if (!token) {
+  if (!token && !location.pathname.startsWith("/oauth/")) {
     const fullPath = location.pathname + location.search;
     return (
       <Navigate to={`/login?from=${encodeURIComponent(fullPath)}`} replace />

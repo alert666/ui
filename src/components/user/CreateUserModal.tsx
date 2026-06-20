@@ -4,7 +4,7 @@ import { App, Col, Form, Input, Row, Tag } from "antd";
 import ModalComponent from "../base/Modal";
 import TransferComponent from "../base/Transfer";
 import { ListRole } from "@/services/role";
-import { Rolecolumns } from "@/types/user/user.tsx";
+import { Rolecolumns } from "@/components/user/User";
 import { useEffect, useState } from "react";
 
 interface CreateUserModalProps {

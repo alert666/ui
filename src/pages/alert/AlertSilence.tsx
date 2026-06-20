@@ -1,4 +1,4 @@
-import { GetAlertSilenceColumns } from "@/components/alertSilence/AlertSilenceTableColums";
+﻿import { GetAlertSilenceColumns } from "@/components/alertSilence/AlertSilenceTableColums";
 import AlertSilenceCreator from "@/components/alertSilence/CreateAlertSilence";
 import DynamicTable from "@/components/base/DynamicTable";
 import {
@@ -34,7 +34,7 @@ function AlertSilencePage() {
     const rawStatus = searchParams.get("status"); // 1. 提前获取 status
     const createdBy = searchParams.get("createdBy"); // 1. 提前获取 status
     // 2. 统一拦截判断：如果任一核心参数缺失，则补全 URL 并拦截请求
-    if (!page || !pageSize || rawStatus === null) {
+    if (!page || !pageSize) {
       const newParams = new URLSearchParams(searchParams);
 
       if (!page) {
@@ -43,6 +43,7 @@ function AlertSilencePage() {
       if (!pageSize) {
         newParams.set("pageSize", PageOptionEnum.DEFAULTPAGESIZE.toString());
       }
+
       if (rawStatus === null) {
         // 如果 URL 里没有 status 参数，设置为默认值 "1"
         newParams.set("status", "1");
@@ -54,14 +55,13 @@ function AlertSilencePage() {
     }
 
     // 3. 此时 page, pageSize, status 肯定都存在于 URL 中
-    const statusNum = Number(rawStatus);
+    const statusNum = rawStatus ? Number(rawStatus) : undefined;
 
     // 校验 status 是否在合法范围 [0, 1, 2] 内，防止用户手动输入非法值
-    const validatedStatus: AlertSilenceListReq["status"] = [0, 1, 2].includes(
-      statusNum,
-    )
-      ? (statusNum as AlertSilenceListReq["status"])
-      : 1;
+    const validatedStatus: AlertSilenceListReq["status"] =
+      statusNum !== undefined && ([0, 1, 2] as number[]).includes(statusNum)
+        ? (statusNum as AlertSilenceListReq["status"])
+        : undefined;
 
     const params: AlertSilenceListReq = {
       page: Number(page),
@@ -126,6 +126,7 @@ function AlertSilencePage() {
         dimensions={searchDimensions}
         searchParams={searchParams}
         setSearchParams={setSearchParams}
+        preserveDimensions
         onRefresh={() => alertSilenceListRes.refresh()}
         extra={
           <Button

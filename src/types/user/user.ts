@@ -5,6 +5,7 @@ export interface userLoginRequest {
 
 export interface userLoginResponse {
   token: string;
+  refreshToken: string;
 }
 
 export interface userListRequest {
@@ -87,9 +88,10 @@ export interface UserUpPwdRequest {
   newPassword: string;
 }
 
-export interface OAuthLoginRequest {
+export interface OAuthLoginResponse {
   user: UserInfoResponse;
   token: string;
+  refreshToken: string;
 }
 
 export enum UserStatus {
