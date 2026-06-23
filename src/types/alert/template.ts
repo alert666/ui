@@ -29,7 +29,7 @@ export interface AlertTemplateRecord {
   template: string;
   aggregationTemplate: string;
   receiveIdType: string;
-  receiveId: string;
+  receiveId: string[];
   alertChannelID: number;
   alertChannel?: {
     id: number;

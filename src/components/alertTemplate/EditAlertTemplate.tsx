@@ -103,16 +103,7 @@ const AlertTemplateModal: React.FC<AlertTemplateModalProps> = ({
 
   useEffect(() => {
     if (visible && record) {
-      // Parse receiveId from JSON string to array
-      let receiveIdArr: string[] = [];
-      if (record.receiveId) {
-        try {
-          const parsed = JSON.parse(record.receiveId);
-          receiveIdArr = Array.isArray(parsed) ? parsed : [];
-        } catch {
-          receiveIdArr = [];
-        }
-      }
+      const receiveIdArr: string[] = Array.isArray(record.receiveId) ? record.receiveId : [];
       form.setFieldsValue({
         alertChannelID: record.alertChannelID,
         receiveIdType: record.receiveIdType,
@@ -130,15 +121,7 @@ const AlertTemplateModal: React.FC<AlertTemplateModalProps> = ({
   };
 
   const handleCancelEdit = () => {
-    let receiveIdArr: string[] = [];
-    if (record.receiveId) {
-      try {
-        const parsed = JSON.parse(record.receiveId);
-        receiveIdArr = Array.isArray(parsed) ? parsed : [];
-      } catch {
-        receiveIdArr = [];
-      }
-    }
+    const receiveIdArr: string[] = Array.isArray(record.receiveId) ? record.receiveId : [];
     form.setFieldsValue({
       alertChannelID: record.alertChannelID,
       receiveIdType: record.receiveIdType,

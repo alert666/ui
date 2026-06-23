@@ -98,21 +98,18 @@ export const GetAlertTemplateColumns = (
           chat_id: { color: "orange", label: "Chat ID" },
         };
 
-        if (!record.receiveId) return "-";
-        let ids = [];
-        try {
-          const parsed = JSON.parse(record.receiveId);
-          ids = Array.isArray(parsed) ? parsed : [];
-        } catch {
-          ids = [];
-        }
-        if (ids.length === 0) return "-";
+        if (
+          !record.receiveId ||
+          !Array.isArray(record.receiveId) ||
+          record.receiveId.length === 0
+        )
+          return "-";
 
         const cfg = typeConfig[record.receiveIdType];
         const color = cfg?.color || "default";
         const label = cfg?.label || record.receiveIdType || "-";
 
-        const text = ids.join(", ");
+        const text = record.receiveId.join(", ");
         return (
           <Tooltip title={`${label}: ${text}`}>
             <div
