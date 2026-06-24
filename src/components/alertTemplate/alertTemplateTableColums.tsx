@@ -96,6 +96,7 @@ export const GetAlertTemplateColumns = (
           user_id: { color: "purple", label: "User ID" },
           email: { color: "green", label: "Email" },
           chat_id: { color: "orange", label: "Chat ID" },
+          remote: { color: "blue", label: "Remote" },
         };
 
         if (

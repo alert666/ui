@@ -257,6 +257,7 @@ const AlertTemplateModal: React.FC<AlertTemplateModalProps> = ({
                   { label: "User ID", value: "user_id" },
                   { label: "Email", value: "email" },
                   { label: "Chat ID", value: "chat_id" },
+                  { label: "Remote", value: "remote" },
                 ]}
               />
             </Form.Item>
