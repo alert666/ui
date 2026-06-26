@@ -1,4 +1,4 @@
-import { ApiResponse } from "@/types";
+﻿import { ApiResponse } from "@/types";
 import { AlertTemplateRecord } from "@/types/alert/template";
 import { Result } from "ahooks/lib/useRequest/src/types";
 import {
@@ -110,9 +110,43 @@ export const GetAlertTemplateColumns = (
         const color = cfg?.color || "default";
         const label = cfg?.label || record.receiveIdType || "-";
 
-        const text = record.receiveId.join(", ");
+        const ids = record.receiveId;
+        const previewCount = 3;
+        const preview = ids.slice(0, previewCount).join(", ");
+        const remaining = ids.length - previewCount;
+        const showMore = remaining > 0;
+
         return (
-          <Tooltip title={`${label}: ${text}`}>
+          <Tooltip
+            title={
+              <div
+                style={{
+                  maxHeight: 280,
+                  overflowY: "auto",
+                  lineHeight: "22px",
+                }}
+              >
+                <div style={{ fontWeight: 600, marginBottom: 4, fontSize: 13 }}>
+                  {label}（共 {ids.length} 个）
+                </div>
+                {ids.map((id, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      fontSize: 12,
+                      fontFamily: "SFMono-Regular, Consolas, monospace",
+                      wordBreak: "break-all",
+                      padding: "1px 0",
+                      color: i % 2 === 0 ? "#fff" : "rgba(255,255,255,0.85)",
+                    }}
+                  >
+                    {i + 1}. {id}
+                  </div>
+                ))}
+              </div>
+            }
+            styles={{ root: { minWidth: 280, maxWidth: 400 } }}
+          >
             <div
               style={{
                 display: "inline-flex",
@@ -138,8 +172,22 @@ export const GetAlertTemplateColumns = (
                 ellipsis
                 style={{ fontSize: 13, flex: 1, minWidth: 0 }}
               >
-                {text}
+                {preview}
+                {showMore ? ", ..." : ""}
               </Typography.Text>
+              {showMore && (
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: "#999",
+                    flexShrink: 0,
+                    marginLeft: -2,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  +{remaining}
+                </span>
+              )}
             </div>
           </Tooltip>
         );
