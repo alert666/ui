@@ -1,4 +1,4 @@
-import { useRequest } from "ahooks";
+﻿import { useRequest } from "ahooks";
 import {
   App,
   Avatar,
@@ -22,20 +22,27 @@ import { useEffect, useRef, useState } from "react";
 import { UserInfo, UserUpdateBySelf } from "@/services/user";
 import { UserUpdateRequest, UserUpPwdRequest } from "@/types/user/user";
 
-
 interface UserProfileDrawerProps {
   open: boolean;
   onClose: () => void;
 }
 
-export default function UserProfileDrawer({ open, onClose }: UserProfileDrawerProps) {
+export default function UserProfileDrawer({
+  open,
+  onClose,
+}: UserProfileDrawerProps) {
   const { message } = App.useApp();
   const [form] = Form.useForm();
   const [pwdForm] = Form.useForm();
   const [showPwdModal, setShowPwdModal] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const { data: userInfo, loading, refresh, run } = useRequest(UserInfo, {
+  const {
+    data: userInfo,
+    loading,
+    refresh,
+    run,
+  } = useRequest(UserInfo, {
     manual: true,
     onSuccess: (data) => {
       form.setFieldsValue(data);
@@ -95,7 +102,8 @@ export default function UserProfileDrawer({ open, onClose }: UserProfileDrawerPr
         title="个人信息"
         open={open}
         onClose={onClose}
-        size="large" styles={{ wrapper: { width: 480 } }}
+        size="large"
+        styles={{ wrapper: { width: 600 } }}
         loading={loading}
         destroyOnHidden
       >
@@ -116,7 +124,10 @@ export default function UserProfileDrawer({ open, onClose }: UserProfileDrawerPr
                 {role.name}
               </Tag>
             ))}
-            <Tag color={userInfo?.status === 1 ? "success" : "error"} className="border-0">
+            <Tag
+              color={userInfo?.status === 1 ? "success" : "error"}
+              className="border-0"
+            >
               {userInfo?.status === 1 ? "正常" : "禁用"}
             </Tag>
           </div>
@@ -134,10 +145,16 @@ export default function UserProfileDrawer({ open, onClose }: UserProfileDrawerPr
               { icon: null, label: "用户ID", value: userInfo?.id },
               { icon: null, label: "用户名", value: userInfo?.name },
               { icon: <MailOutlined />, label: "邮箱", value: userInfo?.email },
-              { icon: <MobileOutlined />, label: "手机号", value: userInfo?.mobile },
+              {
+                icon: <MobileOutlined />,
+                label: "手机号",
+                value: userInfo?.mobile,
+              },
             ].map(({ label, value }) => (
               <div key={label} className="flex items-center text-sm">
-                <span className="w-20" style={{ color: "#8c8c8c" }}>{label}</span>
+                <span className="w-20" style={{ color: "#8c8c8c" }}>
+                  {label}
+                </span>
                 <span>{value || "—"}</span>
               </div>
             ))}
@@ -151,12 +168,7 @@ export default function UserProfileDrawer({ open, onClose }: UserProfileDrawerPr
           <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
             <EditOutlined /> 修改信息
           </h4>
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={onFinish}
-            size="small"
-          >
+          <Form form={form} layout="vertical" onFinish={onFinish} size="small">
             <Form.Item
               label="头像链接"
               name="avatar"

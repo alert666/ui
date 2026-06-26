@@ -1,4 +1,4 @@
-import { useContext, useMemo, useState } from "react";
+﻿import { useContext, useMemo, useState } from "react";
 import { GlobalContext } from "@/components/ThemeProvider";
 import { Avatar, Button, Dropdown, Space, Divider, Select, Badge } from "antd";
 import {
@@ -103,29 +103,30 @@ export default function AppHeader({
         }}
       >
         <div className="p-5">
-          <div className="flex items-start gap-3">
-            <Avatar size={48} src={userData?.avatar} icon={<UserOutlined />} />
-            {/* <div className="flex-1 min-w-0 pt-0.5">
-              <div className="text-sm font-semibold truncate">
-                {userData?.nickName || userData?.name || "未知用户"}
+          <div className="flex items-center gap-4">
+            <Avatar
+              size={56}
+              src={userData?.avatar}
+              icon={<UserOutlined />}
+              style={{
+                boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+                flexShrink: 0,
+              }}
+            />
+            <div className="flex-1 min-w-0">
+              <div className="text-base font-semibold truncate leading-snug">
+                {userData?.nickName || userData?.name || "\u672A\u77E5\u7528\u6237"}
               </div>
-            </div> */}
+            </div>
           </div>
         </div>
 
-        {/* 🌟 重新加回用户信息详情区域 */}
-        <div className="px-4 py-3 text-sm">
+        <div className="px-4 py-3 text-sm pt-0">
           <div className="flex items-center gap-3">
-            <UserOutlined style={{ color: isDark ? "#888" : "#1677ff" }} />
-            <span className="truncate">{userData?.name || "未设置"}</span>
-          </div>
-          {/* 这里是之前漏掉的邮箱 */}
-          <div className="flex items-center gap-3 mt-2">
             <MailOutlined style={{ color: isDark ? "#888" : "#1677ff" }} />
-            <span className="truncate">{userData?.email || "未设置"}</span>
+            <span className="truncate">{userData?.email || "\u672A\u8BBE\u7F6E"}</span>
           </div>
         </div>
-
         <Divider style={{ margin: "4px 0", borderColor: menuBorder }} />
 
         <div className="p-2 flex gap-1">
@@ -250,12 +251,15 @@ export default function AppHeader({
               trigger={["click"]}
               placement="bottomRight"
             >
-              <div className="flex items-center gap-2 cursor-pointer p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5">
-                <Avatar
-                  src={userData?.avatar}
-                  icon={<UserOutlined />}
-                  style={{ background: isDark ? "#333" : "#1677ff" }}
-                />
+              <div className="flex items-center gap-2 cursor-pointer p-1 rounded-full transition-all duration-200 hover:bg-black/5 dark:hover:bg-white/5 active:scale-95">
+                <div className="ring-2 ring-transparent hover:ring-blue-500/40 dark:hover:ring-blue-400/40 rounded-full transition-all duration-200">
+                  <Avatar
+                    size={36}
+                    src={userData?.avatar}
+                    icon={<UserOutlined />}
+                    style={{ background: isDark ? "#333" : "#1677ff" }}
+                  />
+                </div>
               </div>
             </Dropdown>
           )}
