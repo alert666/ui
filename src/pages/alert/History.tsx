@@ -34,6 +34,7 @@ import {
 import {
   GetAlertHistory,
   GetAlertHistoryList,
+  GetAlertNameOptions,
   UpdateAlertHistory,
 } from "@/services/alertHistory";
 import { CreateAlertSilence } from "@/services/alertSilence";
@@ -347,6 +348,24 @@ const AlertHistoryPage = () => {
     getAlertHistoryResult.run({ id: Number(record.id) });
     setDetailVisible(true);
   };
+
+  // ------ 获取 alertname options ------
+  const [alertNameOptions, setAlertNameOptions] = useState([{}]);
+
+  useRequest(GetAlertNameOptions, {
+    onSuccess: (data) => setAlertNameOptions(data),
+  });
+
+  const activeDimConfig = useMemo(() => {
+    const config = SEARCH_DIMENSIONS.find((d) => d.value === activeDim);
+    if (!config) return null;
+
+    if (config.value === "alertName") {
+      return { ...config, options: alertNameOptions };
+    }
+    return config;
+  }, [activeDim, alertNameOptions]);
+
   return (
     <div className="">
       <div
@@ -390,15 +409,12 @@ const AlertHistoryPage = () => {
                   />
                 </Form.Item>
                 <Form.Item name="searchValue" noStyle>
-                  {SEARCH_DIMENSIONS.find((d) => d.value === activeDim)
-                    ?.type === "select" ? (
+                  {activeDimConfig?.type === "select" ? (
                     <Select
-                      style={{ width: 160 }}
+                      style={{ width: 240 }}
                       placeholder="请选择内容"
-                      options={
-                        SEARCH_DIMENSIONS.find((d) => d.value === activeDim)
-                          ?.options
-                      }
+                      showSearch
+                      options={activeDimConfig.options}
                       onChange={() => form.submit()}
                     />
                   ) : (
@@ -475,7 +491,6 @@ const AlertHistoryPage = () => {
                 />
               </Tooltip>
             </div>
-
           </div>
         </Form>
 

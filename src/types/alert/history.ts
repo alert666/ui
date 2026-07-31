@@ -14,7 +14,13 @@ export interface AlertHistoryFormValues {
 }
 
 export const SEARCH_DIMENSIONS = [
-  { label: "告警名称", value: "alertName", type: "input", isLabel: false },
+  {
+    label: "告警名称",
+    value: "alertName",
+    type: "select",
+    isLabel: false,
+    options: [],
+  },
   { label: "告警实例", value: "instance", type: "input", isLabel: false },
   { label: "告警指纹", value: "fingerprint", type: "input", isLabel: false },
   {
