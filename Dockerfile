@@ -3,7 +3,7 @@ FROM registry.cn-beijing.aliyuncs.com/qqlx/node:24.15.0-alpine AS builder
 WORKDIR /app
 
 # 配置镜像源加速
-RUN yarn config set registry https://registry.npmmirror.com
+# RUN yarn config set registry https://registry.npmmirror.com
 
 # 拷贝依赖描述文件
 COPY package.json yarn.lock* ./
@@ -22,7 +22,7 @@ FROM registry.cn-beijing.aliyuncs.com/qqlx/nginx:1.28.0-otel
 # 拷贝打包产物
 COPY --from=builder /app/dist /data/html/apiserver/
 
-COPY nginx/  /etc/nginx/nginx.conf.template
+COPY nginx/nginx.conf.template /etc/nginx/nginx.conf.template
 COPY nginx/conf.d/alert.conf /etc/nginx/conf.d/alert.conf
 
 COPY docker-entrypoint.sh /docker-entrypoint.sh
