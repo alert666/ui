@@ -150,9 +150,9 @@ export function GetAlertHistorycolumns(
       render: (_, record) => {
         const isFiring = record.status === "firing";
         const severityMap: Record<string, { color: string; label: string }> = {
-          P0: { color: "#ff4d4f", label: "严重" },
-          P1: { color: "#faad14", label: "警告" },
-          P2: { color: "#1890ff", label: "提示" },
+          P0: { color: "#ff4d4f", label: "P0" },
+          P1: { color: "#faad14", label: "P1" },
+          P2: { color: "#1890ff", label: "P2" },
           default: { color: "#999", label: record.severity },
         };
         const sev = severityMap[record.severity] || severityMap.default;

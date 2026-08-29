@@ -22,9 +22,13 @@ FROM registry.cn-beijing.aliyuncs.com/qqlx/nginx:1.28.0-otel
 # 拷贝打包产物
 COPY --from=builder /app/dist /data/html/apiserver/
 
-COPY nginx/nginx.conf /etc/nginx/nginx.conf
+COPY nginx/  /etc/nginx/nginx.conf.template
 COPY nginx/conf.d/alert.conf /etc/nginx/conf.d/alert.conf
+
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 EXPOSE 80
 
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
