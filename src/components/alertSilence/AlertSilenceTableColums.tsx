@@ -36,26 +36,12 @@ export const GetAlertSilenceColumns = (
       dataIndex: "id",
       key: "id",
       width: 70,
-      render: (id) => <Text type="secondary">#{id}</Text>,
+      render: (id) => <Text type="secondary">{id}</Text>,
     },
-    // {
-    //   title: "所属集群",
-    //   dataIndex: "cluster",
-    //   key: "cluster",
-    //   render: (name: string) => (
-    //     <Typography.Text
-    //       copyable
-    //       strong
-    //       style={{ color: props.token.colorPrimary }}
-    //     >
-    //       {name}
-    //     </Typography.Text>
-    //   ),
-    // },
     {
       title: "静默规则 / 指纹",
       key: "match_rule",
-      minWidth: 400,
+      width: 300,
       render: (_, record) => {
         // 解构数据，设置默认值防止 null 报错
         const { matchers = [], fingerprint } = record;
@@ -133,6 +119,13 @@ export const GetAlertSilenceColumns = (
         // 3. 兜底显示
         return <Text type="secondary">无匹配信息</Text>;
       },
+    },
+    {
+      title: "说明",
+      dataIndex: "comment",
+      key: "comment",
+      responsive: ["xl"],
+      render: (text) => <Text style={{ fontSize: "13px" }}>{text}</Text>,
     },
     {
       title: "状态",

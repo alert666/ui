@@ -35,7 +35,7 @@ export function GetAlertHistorycolumns(
       title: "告警名称",
       dataIndex: "alertname",
       fixed: "left",
-      width: 150,
+      width: 300,
       sorter: (a, b) => a.alertname.localeCompare(b.alertname),
       ellipsis: {
         showTitle: false,
@@ -61,21 +61,13 @@ export function GetAlertHistorycolumns(
     {
       title: "告警指纹",
       dataIndex: "fingerprint",
-      width: 100,
-      responsive: ["md"],
-      sorter: (a, b) => a.cluster.localeCompare(b.cluster),
+      width: 160,
+      responsive: ["xxl"],
     },
-    // {
-    //   title: "租户",
-    //   dataIndex: "cluster",
-    //   width: 100,
-    //   responsive: ["sm"], // 平板及以上显示
-    //   sorter: (a, b) => a.cluster.localeCompare(b.cluster),
-    // },
     {
       title: "开始时间",
       dataIndex: "startsAt",
-      width: 180,
+      width: "180px",
       sorter: (a, b) => a.startsAt.localeCompare(b.startsAt),
       render: (_: string, record) => {
         if (record.endsAt) {
@@ -111,10 +103,24 @@ export function GetAlertHistorycolumns(
       },
     },
     {
+      title: "名称空间",
+      dataIndex: "labels.namespace",
+      width: 360,
+      responsive: ["xl"],
+      render: (_: string, record: AlertHistoryItem) => {
+        const labels = record.labels;
+        return (
+          <Typography.Text copyable={true} ellipsis={true}>
+            {labels["namespace"] || ""}
+          </Typography.Text>
+        );
+      },
+    },
+    {
       title: "实例",
       dataIndex: "instance",
       width: 180,
-      // responsive: ["xxl"], // 如果你希望在普通分辨率下也显示，可以删掉这行
+      responsive: ["xxl"], // 如果你希望在普通分辨率下也显示，可以删掉这行
       sorter: (a, b) => (a.instance || "").localeCompare(b.instance || ""),
       render: (_: string, record: AlertHistoryItem) => {
         let instance = "";
@@ -146,7 +152,7 @@ export function GetAlertHistorycolumns(
     {
       title: "状态 - 级别 - 静默",
       key: "status_severity",
-      width: 150,
+      width: 180,
       render: (_, record) => {
         const isFiring = record.status === "firing";
         const severityMap: Record<string, { color: string; label: string }> = {
@@ -286,8 +292,7 @@ export function GetAlertHistorycolumns(
     {
       title: "详情",
       dataIndex: "annotations",
-      width: 200,
-      ellipsis: true, // 开启单元格自动截断
+      ellipsis: true,
       render: (annotations: { summary: string; description: string }) => {
         const description = annotations?.description || "-";
         // 气泡卡片展示的内容
@@ -325,10 +330,10 @@ export function GetAlertHistorycolumns(
             <div style={{ cursor: "pointer" }}>
               <Typography.Text
                 type="secondary"
-                ellipsis={{
-                  // 这里关闭自带的 tooltip，因为我们用了更强大的 Popover
-                  tooltip: false,
-                }}
+                // ellipsis={{
+                //   // 这里关闭自带的 tooltip，因为我们用了更强大的 Popover
+                //   tooltip: false,
+                // }}
                 style={{
                   maxWidth: "180px", // 配合宽度进行截断
                   display: "block",
